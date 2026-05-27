@@ -1,0 +1,242 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minutz</title>
+    <style>
+      :root {
+        --background: #080810;
+        --foreground: #f0f0ff;
+        --card: #0e0e1a;
+        --primary: #6366f1;
+        --muted: #12121e;
+        --muted-foreground: #6b6b8a;
+        --destructive: #ef4444;
+        --border: #1e1e32;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 320px;
+        min-height: 290px;
+        padding: 20px;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: var(--foreground);
+        background-color: var(--background);
+        background-image: radial-gradient(circle, #1e1e32 1px, transparent 1px);
+        background-size: 28px 28px;
+      }
+
+      .popup {
+        position: relative;
+      }
+
+      .popup::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -34px;
+        width: 180px;
+        height: 180px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.26) 0%, rgba(99, 102, 241, 0.04) 48%, rgba(99, 102, 241, 0) 72%);
+        filter: blur(18px);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.1;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .subhead {
+        margin-top: 3px;
+        font-size: 10px;
+        line-height: 1.2;
+        color: var(--muted-foreground);
+      }
+
+      .dot-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      #statusDot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--muted-foreground);
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45);
+      }
+
+      #statusDotLabel {
+        font-size: 9px;
+        line-height: 1;
+        text-transform: lowercase;
+        color: var(--muted-foreground);
+      }
+
+      .divider {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 12px 0;
+      }
+
+      #detectionBanner {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(18, 18, 30, 0.7);
+        color: var(--muted-foreground);
+        font-size: 12px;
+        line-height: 1.2;
+        padding: 8px 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #detectionBanner.active {
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--primary);
+        background: var(--card);
+        color: var(--foreground);
+      }
+
+      #statusCard {
+        margin-top: 10px;
+        min-height: 56px;
+        padding: 14px;
+        text-align: center;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(14, 14, 26, 0.96) 0%, rgba(10, 10, 18, 0.92) 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 0 36px -18px rgba(99, 102, 241, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      #statusText {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.25;
+        color: var(--muted-foreground);
+      }
+
+      #timerText {
+        margin: 0;
+        display: none;
+        font-size: 20px;
+        line-height: 1.1;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      #spinner {
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        border: 2px solid var(--primary);
+        border-top-color: transparent;
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #actionBtn {
+        margin-top: 12px;
+        width: 100%;
+        height: 44px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        box-shadow: 0 0 40px -16px rgba(99, 102, 241, 0.55);
+      }
+
+      #actionBtn:hover {
+        background: #5558e8;
+      }
+
+      #actionBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .footer {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 10px;
+        line-height: 1.2;
+        color: var(--muted-foreground);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="popup">
+      <section class="content">
+        <div class="header-row">
+          <div>
+            <h1 class="logo">Minutz</h1>
+            <div class="subhead">AI Meeting Intelligence</div>
+          </div>
+          <div class="dot-wrap">
+            <span id="statusDot"></span>
+            <span id="statusDotLabel">idle</span>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div id="detectionBanner">&mdash; Open a meeting to start</div>
+
+        <section id="statusCard">
+          <p id="statusText">Ready to record</p>
+          <p id="timerText">0:00</p>
+          <div id="spinner"></div>
+        </section>
+
+        <button id="actionBtn" type="button">&#127897; Start Recording</button>
+
+        <footer class="footer">Minutz &mdash; Invisible AI Meeting Intelligence</footer>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

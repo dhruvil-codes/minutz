@@ -1,0 +1,35 @@
+﻿{
+  "name": "Minutz",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabCapture"
+  ],
+  "host_permissions": [
+    "*://*.zoom.us/*",
+    "*://meet.google.com/*",
+    "*://*.teams.microsoft.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.zoom.us/*",
+        "*://meet.google.com/*",
+        "*://*.teams.microsoft.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
+
