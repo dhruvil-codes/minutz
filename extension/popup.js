@@ -1,7 +1,8 @@
-﻿const UI_STATE_KEY = "popupUiState";
+const UI_STATE_KEY = "popupUiState";
 
 const statusDot = document.getElementById("statusDot");
 const meetingBadge = document.getElementById("meetingBadge");
+const meetingTitleInput = document.getElementById("meetingTitleInput");
 const statusCard = document.getElementById("statusCard");
 const primaryBtn = document.getElementById("primaryBtn");
 
@@ -11,7 +12,8 @@ let uiState = {
   startedAt: null,
   sessionId: null,
   meetingDetected: false,
-  meetingProvider: null
+  meetingProvider: null,
+  meetingTitle: ""
 };
 
 function providerFromUrl(url) {
@@ -19,6 +21,10 @@ function providerFromUrl(url) {
   if (/^https?:\/\/meet\.google\.com\//i.test(url || "")) return "Google Meet";
   if (/^https?:\/\/[^/]*\.teams\.microsoft\.com\//i.test(url || "")) return "Teams";
   return null;
+}
+
+function normalizeMeetingTitle(value) {
+  return String(value || "").trim();
 }
 
 function formatElapsed(startedAt) {
@@ -76,7 +82,7 @@ function renderButton() {
 
   if (uiState.status === "recording") {
     primaryBtn.classList.add("stop");
-    primaryBtn.textContent = "\u23F9 Stop & Process";
+    primaryBtn.textContent = "\u23F9 Stop Recording";
     return;
   }
 
@@ -89,7 +95,7 @@ function renderButton() {
 
   if (uiState.status === "done") {
     primaryBtn.classList.add("done");
-    primaryBtn.textContent = "View Summary \u2192";
+    primaryBtn.textContent = "Open Dashboard \u2192";
     return;
   }
 
@@ -111,13 +117,13 @@ function renderStatusCard() {
   }
 
   if (uiState.status === "processing") {
-    statusCard.textContent = "Analyzing with AI...";
+    statusCard.textContent = "Sending transcript to dashboard...";
     stopTimer();
     return;
   }
 
   if (uiState.status === "done") {
-    statusCard.textContent = "Summary ready \u2713";
+    statusCard.textContent = "Recording complete. View results in dashboard.";
     stopTimer();
     return;
   }
@@ -127,6 +133,10 @@ function renderStatusCard() {
 }
 
 function render() {
+  if (meetingTitleInput && meetingTitleInput !== document.activeElement) {
+    meetingTitleInput.value = uiState.meetingTitle || "";
+  }
+
   renderBadge();
   renderDot();
   renderStatusCard();
@@ -167,6 +177,7 @@ async function hydrateState() {
     uiState.status = "recording";
     uiState.sessionId = recordingState.sessionId || uiState.sessionId;
     uiState.startedAt = recordingState.startedAt || uiState.startedAt || Date.now();
+    uiState.meetingTitle = recordingState.meetingTitle || uiState.meetingTitle;
   }
   if (recordingState?.status === "processing") {
     uiState.status = "processing";
@@ -179,12 +190,17 @@ async function hydrateState() {
 
 async function onPrimaryClick() {
   if (uiState.status === "done") {
-    await chrome.tabs.create({ url: "http://localhost:3000" });
+    await chrome.tabs.create({ url: "http://localhost:3000/dashboard" });
     return;
   }
 
   if (uiState.status === "idle") {
-    const response = await chrome.runtime.sendMessage({ type: "startRecording" });
+    const meetingTitle = normalizeMeetingTitle(meetingTitleInput?.value || uiState.meetingTitle);
+    const response = await chrome.runtime.sendMessage({
+      type: "startRecording",
+      meeting_title: meetingTitle
+    });
+
     if (!response?.ok) {
       statusCard.textContent = response?.error || "Unable to start recording";
       return;
@@ -193,7 +209,8 @@ async function onPrimaryClick() {
     await setUiState({
       status: "recording",
       startedAt: Date.now(),
-      sessionId: response.session_id || null
+      sessionId: response.session_id || null,
+      meetingTitle
     });
     return;
   }
@@ -206,10 +223,17 @@ async function onPrimaryClick() {
     }
 
     await setUiState({
-      status: "processing",
+      status: "done",
+      startedAt: null,
       sessionId: response.session_id || uiState.sessionId
     });
   }
+}
+
+if (meetingTitleInput) {
+  meetingTitleInput.addEventListener("input", () => {
+    setUiState({ meetingTitle: normalizeMeetingTitle(meetingTitleInput.value) }).catch(() => {});
+  });
 }
 
 primaryBtn.addEventListener("click", () => {

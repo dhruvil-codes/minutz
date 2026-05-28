@@ -1,35 +1,49 @@
-﻿{
-  "name": "Minutz",
-  "version": "1.0",
-  "manifest_version": 3,
-  "permissions": [
-    "activeTab",
-    "storage",
-    "scripting",
-    "tabCapture"
-  ],
-  "host_permissions": [
-    "*://*.zoom.us/*",
-    "*://meet.google.com/*",
-    "*://*.teams.microsoft.com/*"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*.zoom.us/*",
-        "*://meet.google.com/*",
-        "*://*.teams.microsoft.com/*"
-      ],
-      "js": [
-        "content.js"
-      ]
-    }
-  ]
+{
+    "name":  "Minutz",
+    "version":  "1.0",
+    "manifest_version":  3,
+    "permissions":  [
+                        "activeTab",
+                        "storage",
+                        "scripting",
+                        "tabCapture",
+                        "offscreen"
+                    ],
+    "host_permissions":  [
+                             "*://*.zoom.us/*",
+                             "*://meet.google.com/*",
+                             "*://*.teams.microsoft.com/*",
+                             "http://localhost:3000/*",
+                             "http://localhost:8001/*"
+                         ],
+    "background":  {
+                       "service_worker":  "background.js"
+                   },
+    "action":  {
+                   "default_popup":  "popup.html",
+                   "default_icon":  {
+                                        "16":  "icon16.png",
+                                        "128":  "icon128.png",
+                                        "48":  "icon48.png",
+                                        "32":  "icon32.png"
+                                    }
+               },
+    "content_scripts":  [
+                            {
+                                "matches":  [
+                                                "*://*.zoom.us/*",
+                                                "*://meet.google.com/*",
+                                                "*://*.teams.microsoft.com/*"
+                                            ],
+                                "js":  [
+                                           "content.js"
+                                       ]
+                            }
+                        ],
+    "icons":  {
+                  "16":  "icon16.png",
+                  "128":  "icon128.png",
+                  "48":  "icon48.png",
+                  "32":  "icon32.png"
+              }
 }
-

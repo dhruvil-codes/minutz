@@ -1,4 +1,4 @@
-﻿const API_BASE = "http://localhost:8001";
+const API_BASE = "http://localhost:3000/api/extension";
 
 function sendStatus(status, detail = "", extras = {}) {
   chrome.runtime.sendMessage(
@@ -31,7 +31,7 @@ async function uploadChunkWithRetry(sessionId, chunkIndex, blob) {
     sendStatus("recording", `Uploaded chunk ${chunkIndex + 1}`, {
       session_id: sessionId
     });
-  } catch (error) {
+  } catch (_error) {
     await new Promise((resolve) => setTimeout(resolve, 700));
     try {
       await uploadChunkOnce(sessionId, chunkIndex, blob);
@@ -47,9 +47,9 @@ async function uploadChunkWithRetry(sessionId, chunkIndex, blob) {
   }
 }
 
-async function finalizeSession(sessionId) {
+async function finalizeSession(sessionId, meetingTitle = "") {
   const localNow = new Date();
-  const title = `Meeting — ${localNow.toLocaleString()}`;
+  const title = meetingTitle || `Meeting - ${localNow.toLocaleString()}`;
 
   const finalizeResponse = await fetch(`${API_BASE}/finalize/${sessionId}`, {
     method: "POST",
@@ -83,10 +83,7 @@ async function finalizeSession(sessionId) {
     throw new Error(`Summarize failed (${summarizeResponse.status})`);
   }
 
-  sendStatus("done", "Summary ready", {
-    session_id: sessionId,
-    meeting_id: summarizePayload.meeting_id
-  });
+  return { meeting_id: summarizePayload.meeting_id };
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -102,11 +99,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message?.type === "finalize") {
-    const { session_id: sessionId } = message;
-    sendStatus("processing", "Analyzing with AI...", { session_id: sessionId });
+    const { session_id: sessionId, meeting_title: meetingTitle } = message;
 
-    finalizeSession(sessionId)
-      .then(() => sendResponse({ ok: true }))
+    finalizeSession(sessionId, String(meetingTitle || "").trim())
+      .then((result) => sendResponse({ ok: true, meeting_id: result.meeting_id }))
       .catch((error) => {
         sendStatus("error", error.message, { session_id: sessionId });
         sendResponse({ ok: false, error: error.message });
@@ -117,4 +113,3 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   return false;
 });
-

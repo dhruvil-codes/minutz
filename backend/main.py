@@ -4,7 +4,7 @@ import shutil
 import traceback
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,11 +17,23 @@ from niche_prompts import BASE_KEYS, NICHE_SPECIFIC_KEYS, PROMPTS
 
 load_dotenv()
 
+
+def safe_first(rows):
+    """Safely get the first item from a Supabase join result (list or dict)."""
+    if not rows:
+        return None
+    if isinstance(rows, list):
+        return rows[0] if len(rows) > 0 else None
+    if isinstance(rows, dict):
+        return rows
+    return None
+
+
 app = FastAPI(title="Minutz API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -393,8 +405,14 @@ async def get_meetings():
         summary_rows = row.pop("summaries", None) or []
         preview = None
         if summary_rows:
-            es = summary_rows[0].get("executive_summary") or ""
-            preview = es[:150] if es else None
+            summary = None
+            if isinstance(summary_rows, list) and len(summary_rows) > 0:
+                summary = summary_rows[0]
+            elif isinstance(summary_rows, dict):
+                summary = summary_rows
+            if summary:
+                es = summary.get("executive_summary") or ""
+                preview = es[:150] if es else None
         meetings.append({**row, "executive_summary_preview": preview})
 
     return meetings
@@ -443,10 +461,117 @@ async def get_meeting(meeting_id: str):
 
     row = result.data
 
-    summary_rows = row.pop("summaries", None) or []
-    summary = summary_rows[0] if summary_rows else None
-
-    transcript_rows = row.pop("transcripts", None) or []
-    transcript = transcript_rows[0].get("raw_text") if transcript_rows else None
+    summary = safe_first(row.pop("summaries", None))
+    transcript_row = safe_first(row.pop("transcripts", None))
+    transcript = transcript_row.get("raw_text") if transcript_row else None
 
     return {**row, "summary": summary, "transcript": transcript}
+
+
+class SlackBody(BaseModel):
+    meeting_id: str
+    channel_id: Optional[str] = None
+
+
+@app.post("/send-to-slack")
+async def send_to_slack(body: SlackBody):
+    bot_token = os.getenv("SLACK_BOT_TOKEN", "").strip()
+    channel_id = (body.channel_id or "").strip() or os.getenv("SLACK_CHANNEL_ID", "").strip()
+    print(f"[slack] SLACK_BOT_TOKEN: {bot_token[:20] if bot_token else 'NOT SET'}")
+    print(f"[slack] SLACK_CHANNEL_ID: {channel_id if channel_id else 'NOT SET'}")
+    if not bot_token:
+        raise HTTPException(status_code=500, detail="Slack bot token not configured")
+    if not channel_id:
+        raise HTTPException(status_code=500, detail="Slack channel ID not configured")
+
+    # Fetch meeting + summary
+    try:
+        result = (
+            supabase.table("meetings")
+            .select("*, summaries(*)")
+            .eq("id", body.meeting_id)
+            .maybe_single()
+            .execute()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    row = result.data
+    summary = safe_first(row.pop("summaries", None)) or {}
+
+    title = row.get("title") or "Untitled Meeting"
+    executive_summary = summary.get("executive_summary") or "_No summary available._"
+    action_items: list = summary.get("action_items") or []
+    decisions: list = summary.get("decisions") or []
+    follow_ups: list = summary.get("follow_ups") or []
+
+    def bullet_list(items: list) -> str:
+        if not items:
+            return "_None_"
+        lines = []
+        for item in items:
+            if isinstance(item, dict):
+                task = item.get("task", str(item))
+                owner = item.get("owner")
+                due = item.get("due_date")
+                line = f"• {task}"
+                if owner:
+                    line += f" _(owner: {owner})_"
+                if due:
+                    line += f" _(due: {due})_"
+                lines.append(line)
+            else:
+                lines.append(f"• {item}")
+        return "\n".join(lines)
+
+    blocks = [
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": f"Meeting Summary: {title}", "emoji": True},
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Executive Summary*\n{executive_summary}"},
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Action Items*\n{bullet_list(action_items)}"},
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Key Decisions*\n{bullet_list(decisions)}"},
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Follow-ups*\n{bullet_list(follow_ups)}"},
+        },
+    ]
+
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://slack.com/api/chat.postMessage",
+                headers={
+                    "Authorization": f"Bearer {bot_token}",
+                    "Content-Type": "application/json",
+                },
+                json={"channel": channel_id, "blocks": blocks},
+            )
+        data = resp.json()
+        if not data.get("ok"):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Slack API error: {data.get('error', 'unknown')}",
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Slack request failed: {e}")
+
+    return {"sent": True}
