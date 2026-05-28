@@ -20,3 +20,6 @@ build/
 # Misc
 .DS_Store
 *.log
+
+# Temp audio files
+backend/temp/
