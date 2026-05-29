@@ -41,7 +41,7 @@ export function CtaBanner() {
             className="h-12 px-8 text-sm font-semibold"
             onClick={() => { window.location.href = "/login"; }}
           >
-            Get Started Free
+            Install Chrome Extension
           </ShimmerButton>
         </motion.div>
       </div>

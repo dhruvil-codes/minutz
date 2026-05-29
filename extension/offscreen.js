@@ -43,7 +43,7 @@ async function startRecorder({ streamId, chunkMs, nextSessionId }) {
       type: "offscreenChunk",
       session_id: sessionId,
       mime_type: "audio/webm;codecs=opus",
-      buffer
+      buffer: Array.from(new Uint8Array(buffer))
     });
   };
 
@@ -79,14 +79,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
     }
 
-    try {
-      recorder.stop();
+    // Override onstop to respond only after the final ondataavailable has fired
+    recorder.onstop = () => {
+      chrome.runtime.sendMessage({
+        type: "offscreenStopped",
+        session_id: sessionId
+      });
+      clearRecorder();
       sendResponse({ ok: true });
+    };
+
+    try {
+      recorder.requestData(); // flush any buffered audio before stop
+      recorder.stop();
     } catch (error) {
       clearRecorder();
       sendResponse({ ok: false, error: error?.message || "Failed to stop recorder" });
     }
-    return false;
+    return true; // async response — sendResponse called from onstop
   }
 
   return false;

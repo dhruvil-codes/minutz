@@ -1,25 +1,8 @@
-INFO:     Started server process [17348]
+INFO:     Will watch for changes in these directories: ['D:\\minutz\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [26164] using WatchFiles
+INFO:     Started server process [3508]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62655 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62782 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62782 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:62606 - "POST /v1/messages?beta=true HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'main.py', 'test_pipeline.py', 'niche_prompts.py'. Reloading...
+ 

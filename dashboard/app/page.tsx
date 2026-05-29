@@ -1,5 +1,6 @@
 import InteractiveHero from "@/components/ui/hero-section-nexus";
 import { SocialProof } from "@/components/landing/social-proof";
+import { AboutSection2 } from "@/components/landing/about-section-2";
 import { BentoGrid } from "@/components/landing/bento-grid";
 import { Pricing } from "@/components/landing/pricing";
 import { CtaBanner } from "@/components/landing/cta-banner";
@@ -8,7 +9,7 @@ import { Footer } from "@/components/landing/footer";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000000]">
+    <div className="dark min-h-screen bg-black text-white">
       {/* S1+S2 — Navbar + Hero */}
       <InteractiveHero />
 
@@ -16,6 +17,8 @@ export default function HomePage() {
       <SocialProof />
 
       {/* S4 — Bento grid */}
+      <AboutSection2 />
+
       <BentoGrid />
 
       {/* S8 — Pricing */}

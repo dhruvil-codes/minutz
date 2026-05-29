@@ -3,18 +3,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
+  AlertCircle,
   ArrowLeft,
+  CheckCircle2,
   CheckSquare,
   ClipboardCopy,
+  Clock3,
+  FileText,
   Loader2,
+  MessageSquareText,
   RefreshCw,
   Send,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -47,6 +62,7 @@ interface MeetingDetail {
   status: string;
   created_at: string;
   duration_seconds?: number;
+  transcript?: string;
   summary?: {
     executive_summary?: string;
     sentiment?: string;
@@ -58,30 +74,41 @@ interface MeetingDetail {
   };
 }
 
+const SURFACE = "border-[#2A2A2A] bg-[#1A1A1A] text-white shadow-[0_20px_80px_rgba(0,0,0,0.35)]";
+const SOFT_SURFACE = "border-[#2A2A2A] bg-[#131313] text-white";
+const MUTED_TEXT = "text-[#A3A3A3]";
+
 function sentimentColor(s?: string) {
-  if (!s) return "bg-[#2A2A2A] text-[#A3A3A3]";
+  if (!s) return "border-[#2A2A2A] bg-[#2A2A2A] text-[#A3A3A3]";
   const l = s.toLowerCase();
-  if (l === "positive") return "bg-green-500/10 text-green-400";
-  if (l === "negative") return "bg-red-500/10 text-red-400";
-  return "bg-[#2A2A2A] text-[#A3A3A3]";
+  if (l === "positive") return "border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]";
+  if (l === "negative") return "border-[#EF4444]/25 bg-[#EF4444]/10 text-[#EF4444]";
+  return "border-[#2A2A2A] bg-[#2A2A2A] text-[#A3A3A3]";
 }
 
 function urgencyColor(u?: string) {
-  if (!u) return "bg-[#2A2A2A] text-[#A3A3A3]";
+  if (!u) return "border-[#2A2A2A] bg-[#2A2A2A] text-[#A3A3A3]";
   const l = u.toLowerCase();
-  if (l === "high") return "bg-[#FF6A00]/10 text-[#FF6A00]";
-  if (l === "medium") return "bg-yellow-500/10 text-yellow-400";
-  return "bg-green-500/10 text-green-400";
+  if (l === "high") return "border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]";
+  if (l === "medium") return "border-yellow-400/25 bg-yellow-400/10 text-yellow-300";
+  return "border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]";
 }
 
 function nicheBadgeColor(niche: string) {
   const map: Record<string, string> = {
-    sales: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-    pm: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
-    financial: "bg-green-500/10 text-green-400 border border-green-500/20",
-    general: "bg-[#2A2A2A] text-[#A3A3A3]",
+    sales: "border-blue-400/25 bg-blue-500/10 text-blue-300",
+    pm: "border-purple-400/25 bg-purple-500/10 text-purple-300",
+    financial: "border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]",
+    general: "border-[#2A2A2A] bg-[#2A2A2A] text-[#A3A3A3]",
   };
-  return map[niche] ?? "bg-[#2A2A2A] text-[#A3A3A3]";
+  return map[niche] ?? "border-[#2A2A2A] bg-[#2A2A2A] text-[#A3A3A3]";
+}
+
+function statusBadgeColor(status: string) {
+  const normalized = status.toLowerCase();
+  if (normalized === "completed") return "border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]";
+  if (normalized === "failed") return "border-[#EF4444]/25 bg-[#EF4444]/10 text-[#EF4444]";
+  return "border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00] animate-pulse";
 }
 
 function formatDuration(seconds?: number) {
@@ -91,23 +118,51 @@ function formatDuration(seconds?: number) {
   return `${m}m ${s}s`;
 }
 
+function EmptyFeatureCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof CheckSquare;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Card className={`${SOFT_SURFACE} overflow-hidden`}>
+      <CardContent className="flex min-h-[220px] flex-col items-center justify-center p-10 text-center">
+        <Badge className="mb-5 h-14 w-14 rounded-2xl border-[#2A2A2A] bg-[#1A1A1A] text-[#FF6A00]">
+          <Icon className="size-6" />
+        </Badge>
+        <CardTitle className="text-lg text-white">{title}</CardTitle>
+        <CardDescription className="mt-2 max-w-md text-[#A3A3A3]">
+          {description}
+        </CardDescription>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProcessingState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-24">
-      <div className="relative">
-        <div className="h-16 w-16 rounded-full border-4 border-[#2A2A2A]" />
-        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-[#FF6A00]" />
-      </div>
-      <div className="text-center">
-        <p className="text-lg font-semibold text-white">Analyzing your meeting...</p>
-        <p className="mt-2 text-sm text-[#6B6B6B]">
-          Transcribing audio and extracting intelligence. This takes about 60 seconds.
-        </p>
-      </div>
-      <div className="h-1.5 w-64 overflow-hidden rounded-full bg-[#2A2A2A]">
-        <div className="h-full w-1/2 animate-[shimmer-slide_2s_ease-in-out_infinite_alternate] rounded-full bg-gradient-to-r from-[#FF6A00] to-[#FFB347]" />
-      </div>
-    </div>
+    <Card className={`${SURFACE} overflow-hidden`}>
+      <CardContent className="flex flex-col items-center justify-center gap-7 p-14 text-center">
+        <Badge className="relative h-20 w-20 rounded-full border-[#2A2A2A] bg-[#0D0D0D] text-[#FF6A00]">
+          <Loader2 className="size-8 animate-spin" />
+        </Badge>
+        <CardHeader className="p-0">
+          <CardTitle className="text-2xl text-white">Analyzing your meeting</CardTitle>
+          <CardDescription className="mx-auto mt-2 max-w-xl text-[#A3A3A3]">
+            Transcribing audio, extracting action items, and preparing your summary.
+            This usually lands in about 60 seconds.
+          </CardDescription>
+        </CardHeader>
+        <Progress
+          value={58}
+          className="h-2 max-w-md bg-[#2A2A2A]"
+          indicatorClassName="animate-pulse bg-[#FF6A00]"
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -139,26 +194,38 @@ function NicheIntelligenceCard({ niche, data }: { niche: string; data: NicheData
   if (!hasContent) return null;
 
   return (
-    <Card className="border-[#2A2A2A] bg-[#1A1A1A]">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold text-white">Niche Intelligence</CardTitle>
+    <Card className={`${SURFACE} lg:col-span-2`}>
+      <CardHeader>
+        <Badge className="mb-3 w-fit border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+          Niche Intelligence
+        </Badge>
+        <CardTitle className="text-xl text-white">Mode-specific signals</CardTitle>
+        <CardDescription className="text-[#A3A3A3]">
+          Extracted intelligence for the {niche || "selected"} workflow.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="grid gap-3 sm:grid-cols-2">
         {rows.map((row) => {
           if (!row.value || (Array.isArray(row.value) && row.value.length === 0)) return null;
+          const values = Array.isArray(row.value) ? row.value : [row.value];
           return (
-            <div key={row.label}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">{row.label}</p>
-              {Array.isArray(row.value) ? (
-                <ul className="mt-1 space-y-1">
-                  {row.value.map((v, i) => (
-                    <li key={i} className="text-sm text-[#A3A3A3]">- {v}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-1 text-sm text-[#A3A3A3]">{row.value}</p>
-              )}
-            </div>
+            <Card key={row.label} className={SOFT_SURFACE}>
+              <CardHeader className="pb-3">
+                <CardDescription className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#707070]">
+                  {row.label}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {values.map((value, index) => (
+                  <Badge
+                    key={`${row.label}-${index}`}
+                    className="border-[#2A2A2A] bg-[#0D0D0D] text-[#D4D4D4]"
+                  >
+                    {value}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
           );
         })}
       </CardContent>
@@ -175,23 +242,29 @@ export default function MeetingDetailPage() {
   const [slackLoading, setSlackLoading] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [fetchErrorMsg, setFetchErrorMsg] = useState<string | null>(null);
+
   const fetchFull = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:8001/meeting/${id}`);
-      if (!res.ok) throw new Error("Not found");
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`${res.status}: ${body || "Unknown error"}`);
+      }
       const data: MeetingDetail = await res.json();
       setMeeting(data);
       setFetchError(false);
+      setFetchErrorMsg(null);
       return data;
-    } catch {
+    } catch (err) {
       setFetchError(true);
+      setFetchErrorMsg(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
       setLoading(false);
     }
   }, [id]);
 
-  // Poll status while pending/processing
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
@@ -258,37 +331,52 @@ export default function MeetingDetailPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48 bg-[#2A2A2A]" />
-        <Skeleton className="h-5 w-72 bg-[#2A2A2A]" />
-        <Skeleton className="h-64 w-full bg-[#2A2A2A]" />
-      </div>
+      <Card className={`${SURFACE} mx-auto max-w-7xl`}>
+        <CardContent className="space-y-7 p-8">
+          <Skeleton className="h-9 w-44 bg-[#2A2A2A]" />
+          <Skeleton className="h-20 w-full rounded-2xl bg-[#2A2A2A]" />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Skeleton className="h-56 rounded-2xl bg-[#2A2A2A]" />
+            <Skeleton className="h-56 rounded-2xl bg-[#2A2A2A] lg:col-span-2" />
+          </div>
+          <Skeleton className="h-72 rounded-2xl bg-[#2A2A2A]" />
+        </CardContent>
+      </Card>
     );
   }
 
   if (fetchError || !meeting) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-sm text-[#6B6B6B]">Meeting not found or backend offline.</p>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchFull}
-            className="border-[#2A2A2A] text-[#A3A3A3] hover:text-white"
-          >
-            <RefreshCw className="mr-2 h-3.5 w-3.5" /> Retry
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/dashboard")}
-            className="text-[#A3A3A3] hover:text-white"
-          >
-            <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
-          </Button>
-        </div>
-      </div>
+      <Card className={`${SURFACE} mx-auto max-w-3xl`}>
+        <CardContent className="p-8">
+          <Alert className="border-[#EF4444]/30 bg-[#EF4444]/10 text-white">
+            <AlertCircle className="size-4 text-[#EF4444]" />
+            <AlertTitle className="text-white">Meeting could not be loaded</AlertTitle>
+            <AlertDescription className="mt-2 text-[#A3A3A3]">
+              The backend may be offline, or this meeting no longer exists.
+              {fetchErrorMsg ? (
+                <Card className="mt-4 border-[#EF4444]/20 bg-[#0D0D0D]">
+                  <CardContent className="p-4 text-xs text-[#EF4444]">{fetchErrorMsg}</CardContent>
+                </Card>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+          <CardContent className="flex gap-3 px-0 pb-0 pt-6">
+            <Button onClick={fetchFull} className="bg-[#FF6A00] text-white hover:bg-[#FF6A00]/90">
+              <RefreshCw className="mr-2 size-4" />
+              Retry
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard")}
+              className="border-[#2A2A2A] bg-transparent text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-white"
+            >
+              <ArrowLeft className="mr-2 size-4" />
+              Back to dashboard
+            </Button>
+          </CardContent>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -297,194 +385,316 @@ export default function MeetingDetailPage() {
   const actionItems = summary.action_items ?? [];
   const decisions = summary.decisions ?? [];
   const followUps = summary.follow_ups ?? [];
+  const formattedDuration = formatDuration(meeting.duration_seconds);
 
   return (
-    <div className="space-y-6">
-      <button
-        onClick={() => router.push("/dashboard")}
-        className="flex items-center gap-1.5 text-sm text-[#6B6B6B] transition-colors hover:text-white"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+    <main className="mx-auto max-w-7xl space-y-8">
+      <Card className={`${SURFACE} overflow-hidden`}>
+        <CardContent className="p-6 md:p-8">
+          <CardContent className="mb-8 flex flex-col gap-3 p-0 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/dashboard")}
+              className="w-fit px-0 text-[#A3A3A3] hover:bg-transparent hover:text-white"
+            >
+              <ArrowLeft className="mr-2 size-4" />
+              Back to dashboard
+            </Button>
+            <Button
+              onClick={handleSendToSlack}
+              disabled={slackLoading || isProcessing}
+              variant="outline"
+              className="w-fit border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3] hover:border-[#FF6A00] hover:bg-[#FF6A00]/10 hover:text-[#FF6A00]"
+            >
+              {slackLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Send className="mr-2 size-4" />}
+              Send to Slack
+            </Button>
+          </CardContent>
 
-      <div className="space-y-3">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
-          {meeting.title || "Untitled Meeting"}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold ${nicheBadgeColor(meeting.niche)}`}>
-            {meeting.niche}
-          </span>
-          {summary.sentiment && (
-            <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold ${sentimentColor(summary.sentiment)}`}>
-              {summary.sentiment}
-            </span>
-          )}
-          <span className="inline-flex items-center rounded-md bg-[#2A2A2A] px-2.5 py-0.5 text-xs font-semibold text-[#A3A3A3]">
-            {new Date(meeting.created_at).toLocaleDateString()}
-          </span>
-          {formatDuration(meeting.duration_seconds) && (
-            <span className="inline-flex items-center rounded-md bg-[#2A2A2A] px-2.5 py-0.5 text-xs font-semibold text-[#A3A3A3]">
-              {formatDuration(meeting.duration_seconds)}
-            </span>
-          )}
-          <button
-            onClick={handleSendToSlack}
-            disabled={slackLoading || isProcessing}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-[#2A2A2A] px-3 py-1.5 text-xs font-semibold text-[#A3A3A3] transition-colors hover:border-[#FF6A00] hover:text-[#FF6A00] disabled:opacity-40"
-          >
-            {slackLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            Send to Slack
-          </button>
-        </div>
-      </div>
+          <CardHeader className="p-0">
+            <Badge className="mb-4 w-fit border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+              Meeting Intelligence
+            </Badge>
+            <CardTitle className="max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-white md:text-5xl">
+              {meeting.title || "Untitled Meeting"}
+            </CardTitle>
+            <CardDescription className="mt-3 text-base text-[#A3A3A3]">
+              Clean summary, decisions, and follow-ups extracted from this conversation.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="mt-7 flex flex-wrap gap-2 p-0">
+            <Badge className={nicheBadgeColor(meeting.niche)}>{meeting.niche || "general"}</Badge>
+            <Badge className={statusBadgeColor(meeting.status)}>{meeting.status}</Badge>
+            {summary.sentiment ? <Badge className={sentimentColor(summary.sentiment)}>{summary.sentiment}</Badge> : null}
+            {summary.urgency ? <Badge className={urgencyColor(summary.urgency)}>{summary.urgency} urgency</Badge> : null}
+            <Badge className="border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3]">
+              <Clock3 className="mr-1.5 size-3.5" />
+              {new Date(meeting.created_at).toLocaleDateString()}
+            </Badge>
+            {formattedDuration ? (
+              <Badge className="border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3]">{formattedDuration}</Badge>
+            ) : null}
+          </CardContent>
+        </CardContent>
+      </Card>
 
       {isProcessing ? (
         <ProcessingState />
       ) : (
-        <Tabs defaultValue="summary">
-          <TabsList className="bg-[#1A1A1A] border border-[#2A2A2A]">
-            <TabsTrigger value="summary" className="data-[state=active]:bg-[#2A2A2A] data-[state=active]:text-white">
+        <Tabs defaultValue="summary" className="flex w-full flex-col gap-5">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-2 md:grid-cols-4">
+            <TabsTrigger
+              value="summary"
+              className="h-11 rounded-xl px-4 text-[#A3A3A3] data-active:border-[#2A2A2A] data-active:bg-[#0D0D0D] data-active:text-white"
+            >
+              <Sparkles className="size-4" />
               Summary
             </TabsTrigger>
-            <TabsTrigger value="actions" className="data-[state=active]:bg-[#2A2A2A] data-[state=active]:text-white">
-              Action Items {actionItems.length > 0 && `(${actionItems.length})`}
+            <TabsTrigger
+              value="actions"
+              className="h-11 rounded-xl px-4 text-[#A3A3A3] data-active:border-[#2A2A2A] data-active:bg-[#0D0D0D] data-active:text-white"
+            >
+              <CheckSquare className="size-4" />
+              Action Items
+              {actionItems.length > 0 ? <Badge className="ml-1 bg-[#FF6A00] text-white">{actionItems.length}</Badge> : null}
             </TabsTrigger>
-            <TabsTrigger value="decisions" className="data-[state=active]:bg-[#2A2A2A] data-[state=active]:text-white">
-              Decisions &amp; Follow-ups
+            <TabsTrigger
+              value="decisions"
+              className="h-11 rounded-xl px-4 text-[#A3A3A3] data-active:border-[#2A2A2A] data-active:bg-[#0D0D0D] data-active:text-white"
+            >
+              <Target className="size-4" />
+              Decisions
+            </TabsTrigger>
+            <TabsTrigger
+              value="transcript"
+              className="h-11 rounded-xl px-4 text-[#A3A3A3] data-active:border-[#2A2A2A] data-active:bg-[#0D0D0D] data-active:text-white"
+            >
+              <FileText className="size-4" />
+              Transcript
             </TabsTrigger>
           </TabsList>
 
-          {/* Summary Tab */}
-          <TabsContent value="summary" className="space-y-4 pt-4">
-            <Card className="border-[#2A2A2A] bg-[#1A1A1A]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-white">Executive Summary</CardTitle>
+          <TabsContent value="summary" className="w-full grid gap-4 lg:grid-cols-3">
+            <Card className={`${SURFACE} lg:col-span-2`}>
+              <CardHeader>
+                <Badge className="mb-3 w-fit border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                  Executive Summary
+                </Badge>
+                <CardTitle className="text-2xl text-white">What happened</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-relaxed text-[#A3A3A3]">
-                  {summary.executive_summary ?? "No summary available."}
-                </p>
+                <Card className={SOFT_SURFACE}>
+                  <CardContent className="p-6 text-base leading-8 text-[#D4D4D4]">
+                    {summary.executive_summary && summary.executive_summary.trim()
+                      ? summary.executive_summary
+                      : "Recording was too short to generate a full summary. Try recording at least 30 seconds of clear speech."}
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
 
-            {(summary.sentiment || summary.urgency) && (
-              <div className="flex flex-wrap gap-2">
-                {summary.sentiment && (
-                  <div className="flex items-center gap-2 rounded-lg border border-[#2A2A2A] px-3 py-2 text-sm">
-                    <span className="text-[#6B6B6B]">Sentiment</span>
-                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${sentimentColor(summary.sentiment)}`}>
-                      {summary.sentiment}
-                    </span>
-                  </div>
-                )}
-                {summary.urgency && (
-                  <div className="flex items-center gap-2 rounded-lg border border-[#2A2A2A] px-3 py-2 text-sm">
-                    <span className="text-[#6B6B6B]">Urgency</span>
-                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${urgencyColor(summary.urgency)}`}>
-                      {summary.urgency}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            <Card className={SURFACE}>
+              <CardHeader>
+                <Badge className="mb-3 w-fit border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3]">
+                  Signal
+                </Badge>
+                <CardTitle className="text-xl text-white">Meeting pulse</CardTitle>
+                <CardDescription className={MUTED_TEXT}>
+                  Sentiment and urgency distilled from the transcript.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Card className={SOFT_SURFACE}>
+                  <CardContent className="flex items-center justify-between p-4">
+                    <CardDescription className="text-[#A3A3A3]">Sentiment</CardDescription>
+                    <Badge className={sentimentColor(summary.sentiment)}>{summary.sentiment || "neutral"}</Badge>
+                  </CardContent>
+                </Card>
+                <Card className={SOFT_SURFACE}>
+                  <CardContent className="flex items-center justify-between p-4">
+                    <CardDescription className="text-[#A3A3A3]">Urgency</CardDescription>
+                    <Badge className={urgencyColor(summary.urgency)}>{summary.urgency || "low"}</Badge>
+                  </CardContent>
+                </Card>
+                <Card className={SOFT_SURFACE}>
+                  <CardContent className="flex items-center justify-between p-4">
+                    <CardDescription className="text-[#A3A3A3]">Next step load</CardDescription>
+                    <Badge className="border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                      {actionItems.length + followUps.length} items
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
 
-            {summary.niche_data && (
-              <NicheIntelligenceCard niche={meeting.niche} data={summary.niche_data} />
-            )}
+            {summary.niche_data ? <NicheIntelligenceCard niche={meeting.niche} data={summary.niche_data} /> : null}
           </TabsContent>
 
-          {/* Action Items Tab */}
-          <TabsContent value="actions" className="space-y-4 pt-4">
-            <div className="flex justify-end">
-              <button
-                onClick={copyAllActionItems}
-                disabled={actionItems.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A2A2A] px-3 py-1.5 text-xs font-semibold text-[#A3A3A3] transition-colors hover:border-[#FF6A00] hover:text-[#FF6A00] disabled:opacity-40"
-              >
-                <ClipboardCopy className="h-3.5 w-3.5" /> Copy all as markdown
-              </button>
-            </div>
-
-            {actionItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#2A2A2A] py-12 text-[#6B6B6B]">
-                <CheckSquare className="h-7 w-7 opacity-30" />
-                <span className="text-sm">No action items extracted</span>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {actionItems.map((item, i) => (
-                  <Card key={i} className="border-[#2A2A2A] bg-[#1A1A1A]">
-                    <CardContent className="flex items-start justify-between gap-4 pt-4 pb-4">
-                      <div className="flex items-start gap-3">
-                        <CheckSquare className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6A00]" />
-                        <p className="text-sm font-medium text-white">{item.task}</p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        {item.owner && (
-                          <span className="rounded-md bg-[#FF6A00]/10 px-2 py-0.5 text-xs font-semibold text-[#FF6A00]">
-                            {item.owner}
-                          </span>
-                        )}
-                        {item.due_date && (
-                          <span className="text-xs text-[#6B6B6B]">{item.due_date}</span>
-                        )}
-                      </div>
+          <TabsContent value="actions" className="w-full space-y-4">
+            <Card className={SURFACE}>
+              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <CardContent className="p-0">
+                  <Badge className="mb-3 w-fit border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                    Action Items
+                  </Badge>
+                  <CardTitle className="text-2xl text-white">Ranked next moves</CardTitle>
+                  <CardDescription className={MUTED_TEXT}>
+                    Tasks extracted from the conversation, ready to copy into your workflow.
+                  </CardDescription>
+                </CardContent>
+                <Button
+                  onClick={copyAllActionItems}
+                  disabled={actionItems.length === 0}
+                  variant="outline"
+                  className="border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3] hover:border-[#FF6A00] hover:bg-[#FF6A00]/10 hover:text-[#FF6A00]"
+                >
+                  <ClipboardCopy className="mr-2 size-4" />
+                  Copy all
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {actionItems.length === 0 ? (
+                  <EmptyFeatureCard
+                    icon={CheckSquare}
+                    title="No action items extracted"
+                    description="When the call includes clear owners or next steps, Minutz will rank them here."
+                  />
+                ) : (
+                  <Card className={SOFT_SURFACE}>
+                    <CardContent className="grid gap-3 p-4">
+                      {actionItems.map((item, index) => (
+                        <Card key={`${item.task}-${index}`} className="border-[#2A2A2A] bg-[#0D0D0D]">
+                          <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-start md:justify-between">
+                            <CardContent className="flex gap-4 p-0">
+                              <Badge className="h-9 w-9 rounded-xl border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                                {index + 1}
+                              </Badge>
+                              <CardContent className="p-0">
+                                <CardTitle className="text-base leading-6 text-white">{item.task}</CardTitle>
+                                <CardDescription className="mt-2 text-[#A3A3A3]">
+                                  Prioritized from the meeting transcript.
+                                </CardDescription>
+                              </CardContent>
+                            </CardContent>
+                            <CardContent className="flex flex-wrap gap-2 p-0 md:justify-end">
+                              {item.owner ? (
+                                <Badge className="border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                                  Owner: {item.owner}
+                                </Badge>
+                              ) : null}
+                              {item.due_date ? (
+                                <Badge className="border-[#2A2A2A] bg-[#1A1A1A] text-[#A3A3A3]">
+                                  Due: {item.due_date}
+                                </Badge>
+                              ) : null}
+                            </CardContent>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Decisions & Follow-ups Tab */}
-          <TabsContent value="decisions" className="space-y-4 pt-4">
-            <Card className="border-[#2A2A2A] bg-[#1A1A1A]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-white">Decisions</CardTitle>
+          <TabsContent value="decisions" className="w-full grid gap-4 lg:grid-cols-2">
+            <Card className={SURFACE}>
+              <CardHeader>
+                <Badge className="mb-3 w-fit border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]">
+                  Decisions
+                </Badge>
+                <CardTitle className="text-2xl text-white">Committed outcomes</CardTitle>
+                <CardDescription className={MUTED_TEXT}>
+                  What the conversation resolved or approved.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 {decisions.length === 0 ? (
-                  <p className="text-sm text-[#6B6B6B]">No decisions recorded.</p>
+                  <EmptyFeatureCard
+                    icon={CheckCircle2}
+                    title="No decisions recorded"
+                    description="Explicit yes/no outcomes and approvals will appear here."
+                  />
                 ) : (
-                  <ol className="space-y-2.5">
-                    {decisions.map((d, i) => (
-                      <li key={i} className="flex gap-2.5 text-sm">
-                        <span className="shrink-0 font-semibold text-[#FF6A00]">{i + 1}.</span>
-                        <span className="text-[#A3A3A3]">{d}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  decisions.map((decision, index) => (
+                    <Card key={`${decision}-${index}`} className={SOFT_SURFACE}>
+                      <CardContent className="flex gap-4 p-5">
+                        <Badge className="h-9 w-9 rounded-xl border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E]">
+                          <CheckCircle2 className="size-4" />
+                        </Badge>
+                        <CardTitle className="text-base leading-6 text-white">{decision}</CardTitle>
+                      </CardContent>
+                    </Card>
+                  ))
                 )}
               </CardContent>
             </Card>
 
-            <Card className="border-[#2A2A2A] bg-[#1A1A1A]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-white">Follow-ups</CardTitle>
+            <Card className={SURFACE}>
+              <CardHeader>
+                <Badge className="mb-3 w-fit border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                  Follow-ups
+                </Badge>
+                <CardTitle className="text-2xl text-white">Things to chase</CardTitle>
+                <CardDescription className={MUTED_TEXT}>
+                  Follow-through items that should not disappear after the call.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {followUps.length === 0 ? (
+                  <EmptyFeatureCard
+                    icon={MessageSquareText}
+                    title="No follow-ups"
+                    description="Questions, promised docs, and relationship follow-through will show up here."
+                  />
+                ) : (
+                  followUps.map((followUp, index) => (
+                    <Card key={`${followUp}-${index}`} className={SOFT_SURFACE}>
+                      <CardContent className="flex gap-4 p-5">
+                        <Badge className="h-9 w-9 rounded-xl border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00]">
+                          {index + 1}
+                        </Badge>
+                        <CardTitle className="text-base leading-6 text-white">{followUp}</CardTitle>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="transcript" className="w-full">
+            <Card className={SURFACE}>
+              <CardHeader>
+                <Badge className="mb-3 w-fit border-[#2A2A2A] bg-[#0D0D0D] text-[#A3A3A3]">
+                  Transcript
+                </Badge>
+                <CardTitle className="text-2xl text-white">Raw call text</CardTitle>
+                <CardDescription className={MUTED_TEXT}>
+                  The source material behind the AI summary.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {followUps.length === 0 ? (
-                  <p className="text-sm text-[#6B6B6B]">No follow-ups.</p>
+                {meeting.transcript ? (
+                  <Card className={`${SOFT_SURFACE} max-h-[560px] overflow-y-auto`}>
+                    <CardContent className="whitespace-pre-wrap p-6 text-sm leading-7 text-[#D4D4D4]">
+                      {meeting.transcript}
+                    </CardContent>
+                  </Card>
                 ) : (
-                  <ul className="space-y-2.5">
-                    {followUps.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5 shrink-0 accent-[#FF6A00]"
-                          readOnly
-                        />
-                        <span className="text-[#A3A3A3]">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <EmptyFeatureCard
+                    icon={FileText}
+                    title="No transcript available"
+                    description="Once transcription completes, the full text will be available here."
+                  />
                 )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       )}
-    </div>
+    </main>
   );
 }

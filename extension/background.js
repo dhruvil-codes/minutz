@@ -1,6 +1,7 @@
 const CHUNK_MS = 10000;
 const OFFSCREEN_URL = "offscreen.html";
-const BG_RUNTIME_VERSION = "minutz-bg-offscreen-v2";
+const BACKEND_BASE = "http://localhost:8001";
+const BG_RUNTIME_VERSION = "minutz-bg-offscreen-v3";
 
 console.log(BG_RUNTIME_VERSION);
 
@@ -9,7 +10,8 @@ const state = {
   sessionId: null,
   chunkIndex: 0,
   status: "idle",
-  meetingTitle: ""
+  meetingTitle: "",
+  pendingChunks: new Set()
 };
 let recordingBlinkTimer = null;
 let recordingBlinkVisible = true;
@@ -37,13 +39,6 @@ function isMeetingUrl(url) {
   );
 }
 
-function safeSendToTab(tabId, message) {
-  if (typeof tabId !== "number") return;
-  chrome.tabs.sendMessage(tabId, message, () => {
-    void chrome.runtime.lastError;
-  });
-}
-
 function broadcastStatus(status, extra = {}) {
   chrome.runtime.sendMessage({ type: "status", status, ...extra }, () => {
     void chrome.runtime.lastError;
@@ -56,6 +51,7 @@ function clearRecordingState() {
   state.chunkIndex = 0;
   state.status = "idle";
   state.meetingTitle = "";
+  state.pendingChunks = new Set();
   updateActionBadge();
   chrome.storage.local.set({
     recordingState: {
@@ -108,10 +104,7 @@ async function ensureOffscreenDocument() {
       contextTypes: ["OFFSCREEN_DOCUMENT"],
       documentUrls: [url]
     });
-
-    if (contexts.length > 0) {
-      return;
-    }
+    if (contexts.length > 0) return;
   }
 
   try {
@@ -139,33 +132,126 @@ async function stopOffscreenRecorder() {
   });
 }
 
-async function stopRecorderWithFinalize(reason) {
-  if (state.status !== "recording") {
-    return;
+async function uploadChunkOnce(sessionId, chunkIndex, bufferArray) {
+  const blob = new Blob([new Uint8Array(bufferArray)], { type: "audio/webm;codecs=opus" });
+  const formData = new FormData();
+  formData.append("session_id", sessionId);
+  formData.append("chunk_index", String(chunkIndex));
+  formData.append("audio", blob, `chunk_${chunkIndex}.webm`);
+
+  console.log("[Minutz BG] Uploading chunk", chunkIndex, "session:", sessionId, "size:", blob.size);
+
+  const response = await fetch(`${BACKEND_BASE}/upload-chunk`, {
+    method: "POST",
+    body: formData
+  });
+
+  const text = await response.clone().text();
+  console.log("[Minutz BG] Chunk upload response:", response.status, text);
+
+  if (!response.ok) {
+    throw new Error(`Upload failed (${response.status}): ${text}`);
+  }
+}
+
+async function uploadChunkWithRetry(sessionId, chunkIndex, buffer) {
+  try {
+    await uploadChunkOnce(sessionId, chunkIndex, buffer);
+  } catch (err) {
+    console.error("[Minutz BG] Chunk upload attempt 1 failed:", err.message);
+    await new Promise((r) => setTimeout(r, 700));
+    try {
+      await uploadChunkOnce(sessionId, chunkIndex, buffer);
+    } catch (err2) {
+      console.error("[Minutz BG] Chunk upload attempt 2 failed (final):", err2.message);
+      throw err2;
+    }
+  }
+}
+
+async function finalizeAndSummarize(sessionId, meetingTitle) {
+  const title = meetingTitle || `Meeting - ${new Date().toLocaleString()}`;
+
+  // Wait for all pending chunk uploads
+  console.log("[Minutz BG] Waiting for", state.pendingChunks.size, "pending uploads before finalize");
+  await Promise.all([...state.pendingChunks]);
+
+  console.log("[Minutz BG] Calling finalize for session:", sessionId, "title:", title);
+  const finalizeRes = await fetch(`${BACKEND_BASE}/finalize/${sessionId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, niche: "general" })
+  });
+
+  const finalizeData = await finalizeRes.json();
+  console.log("[Minutz BG] Finalize response:", finalizeRes.status, JSON.stringify(finalizeData));
+
+  if (!finalizeRes.ok) {
+    throw new Error(`Finalize failed (${finalizeRes.status}): ${JSON.stringify(finalizeData)}`);
   }
 
-  const tabId = state.tabId;
-  const sessionId = state.sessionId;
+  const summarizePayload = {
+    meeting_id: finalizeData.meeting_id || sessionId,
+    transcript: finalizeData.transcript || "",
+    niche: "general"
+  };
 
+  console.log("[Minutz BG] Calling summarize, meeting_id:", summarizePayload.meeting_id, "transcript length:", summarizePayload.transcript.length);
+  const summarizeRes = await fetch(`${BACKEND_BASE}/summarize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(summarizePayload)
+  });
+
+  const summaryData = await summarizeRes.json();
+  console.log("[Minutz BG] Summarize response:", summarizeRes.status, JSON.stringify(summaryData));
+
+  if (!summarizeRes.ok) {
+    throw new Error(`Summarize failed (${summarizeRes.status}): ${JSON.stringify(summaryData)}`);
+  }
+
+  const wordCount = summarizePayload.transcript.split(/\s+/).filter(Boolean).length;
+
+  // Notify popup and show system notification
+  chrome.runtime.sendMessage({
+    type: "PIPELINE_COMPLETE",
+    meeting_id: summarizePayload.meeting_id,
+    transcript_length: wordCount
+  }, () => { void chrome.runtime.lastError; });
+
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: "icon-orange.png",
+    title: "Minutz — Meeting saved",
+    message: "Your summary and action items are ready to view."
+  });
+
+  return { meeting_id: summarizePayload.meeting_id };
+}
+
+async function stopRecorderWithFinalize(reason) {
+  if (state.status !== "recording") return;
+
+  const sessionId = state.sessionId;
+  const meetingTitle = state.meetingTitle || "";
+
+  console.log("[Minutz BG] Stop recording triggered, reason:", reason, "session:", sessionId);
   setState({ status: "processing" });
   broadcastStatus("processing", { session_id: sessionId, reason });
 
   await stopOffscreenRecorder();
 
-  safeSendToTab(tabId, {
-    type: "finalize",
-    session_id: sessionId,
-    reason,
-    meeting_title: state.meetingTitle || ""
-  });
+  try {
+    await finalizeAndSummarize(sessionId, meetingTitle);
+    broadcastStatus("done", {
+      session_id: sessionId,
+      detail: "Recording complete. View results in dashboard."
+    });
+  } catch (error) {
+    console.error("[Minutz BG] Pipeline error:", error.message);
+    broadcastStatus("error", { session_id: sessionId, detail: error.message });
+  }
 
-  broadcastStatus("done", {
-    session_id: sessionId,
-    detail: "Recording complete. View results in dashboard."
-  });
-  chrome.tabs.create({ url: "http://localhost:3000/dashboard" }, () => {
-    void chrome.runtime.lastError;
-  });
   clearRecordingState();
 }
 
@@ -179,7 +265,6 @@ async function getTabStreamId(tabId) {
         });
         return;
       }
-
       resolve({ ok: true, streamId });
     });
   });
@@ -194,29 +279,19 @@ async function startRecording(tabId) {
   }
 
   const streamResult = await getTabStreamId(tabId);
-  if (!streamResult.ok) {
-    return streamResult;
-  }
+  if (!streamResult.ok) return streamResult;
 
   try {
     await ensureOffscreenDocument();
   } catch (error) {
-    return {
-      ok: false,
-      error: error?.message || "Unable to initialize offscreen recorder"
-    };
+    return { ok: false, error: error?.message || "Unable to initialize offscreen recorder" };
   }
 
   const sessionId = crypto.randomUUID();
 
   const startResult = await new Promise((resolve) => {
     chrome.runtime.sendMessage(
-      {
-        type: "offscreenStart",
-        streamId: streamResult.streamId,
-        chunkMs: CHUNK_MS,
-        session_id: sessionId
-      },
+      { type: "offscreenStart", streamId: streamResult.streamId, chunkMs: CHUNK_MS, session_id: sessionId },
       (response) => {
         if (chrome.runtime.lastError) {
           resolve({ ok: false, error: chrome.runtime.lastError.message });
@@ -227,17 +302,10 @@ async function startRecording(tabId) {
     );
   });
 
-  if (!startResult.ok) {
-    return startResult;
-  }
+  if (!startResult.ok) return startResult;
 
-  setState({
-    tabId,
-    sessionId,
-    chunkIndex: 0,
-    status: "recording"
-  });
-
+  setState({ tabId, sessionId, chunkIndex: 0, status: "recording", pendingChunks: new Set() });
+  console.log("[Minutz BG] Recording started, session:", sessionId, "tab:", tabId);
   broadcastStatus("recording", { session_id: sessionId });
   return { ok: true, session_id: sessionId };
 }
@@ -252,13 +320,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const currentIndex = state.chunkIndex;
     state.chunkIndex += 1;
 
-    safeSendToTab(state.tabId, {
-      type: "chunk",
-      session_id: message.session_id,
-      chunk_index: currentIndex,
-      mime_type: message.mime_type || "audio/webm;codecs=opus",
-      buffer: message.buffer
-    });
+    console.log("[Minutz BG] Chunk captured, index:", currentIndex, "uploading directly to backend");
+
+    const upload = uploadChunkWithRetry(state.sessionId, currentIndex, message.buffer);
+    state.pendingChunks.add(upload);
+    upload.finally(() => state.pendingChunks.delete(upload));
 
     sendResponse({ ok: true });
     return false;
@@ -334,10 +400,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (tabId !== state.tabId || state.status !== "recording") {
-    return;
-  }
-
+  if (tabId !== state.tabId || state.status !== "recording") return;
   if (typeof changeInfo.url === "string" && !isMeetingUrl(changeInfo.url)) {
     stopRecorderWithFinalize("tab_navigation").catch(() => {});
   }

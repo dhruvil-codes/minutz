@@ -70,19 +70,24 @@ function startTimer() {
 }
 
 function renderButton() {
+  // Clear any extra buttons from done state
+  const extraBtn = document.getElementById("secondaryBtn");
+  if (extraBtn) extraBtn.remove();
+
   primaryBtn.disabled = false;
   primaryBtn.className = "action";
+  primaryBtn.innerHTML = "";
 
   if (uiState.status === "idle") {
     primaryBtn.classList.add("primary");
-    primaryBtn.textContent = "\uD83C\uDF99 Start Recording";
+    primaryBtn.textContent = "🎙 Start Recording";
     primaryBtn.disabled = !uiState.meetingDetected;
     return;
   }
 
   if (uiState.status === "recording") {
     primaryBtn.classList.add("stop");
-    primaryBtn.textContent = "\u23F9 Stop Recording";
+    primaryBtn.textContent = "⏹ Stop Recording";
     return;
   }
 
@@ -95,12 +100,19 @@ function renderButton() {
 
   if (uiState.status === "done") {
     primaryBtn.classList.add("done");
-    primaryBtn.textContent = "Open Dashboard \u2192";
+    primaryBtn.textContent = "View Summary →";
+
+    const secondaryBtn = document.createElement("button");
+    secondaryBtn.id = "secondaryBtn";
+    secondaryBtn.className = "action secondary";
+    secondaryBtn.textContent = "Record another meeting";
+    secondaryBtn.addEventListener("click", () => { resetToIdle(); });
+    primaryBtn.insertAdjacentElement("afterend", secondaryBtn);
     return;
   }
 
   primaryBtn.classList.add("primary");
-  primaryBtn.textContent = "\uD83C\uDF99 Start Recording";
+  primaryBtn.textContent = "🎙 Start Recording";
 }
 
 function renderStatusCard() {
@@ -117,14 +129,24 @@ function renderStatusCard() {
   }
 
   if (uiState.status === "processing") {
-    statusCard.textContent = "Sending transcript to dashboard...";
+    statusCard.textContent = "Processing your meeting...";
     stopTimer();
     return;
   }
 
   if (uiState.status === "done") {
-    statusCard.textContent = "Recording complete. View results in dashboard.";
     stopTimer();
+    const title = uiState.meetingTitle || "Your meeting";
+    const stats = uiState.transcriptWords
+      ? `~${uiState.transcriptWords} words transcribed`
+      : "Processed successfully";
+    statusCard.innerHTML = `
+      <div class="success-card">
+        <div class="success-check">✓</div>
+        <div class="success-title">Meeting saved!</div>
+        <div class="success-subtitle">${title}</div>
+        <div class="success-stats">${stats}</div>
+      </div>`;
     return;
   }
 
@@ -149,6 +171,20 @@ async function persistState() {
 
 async function setUiState(patch) {
   uiState = { ...uiState, ...patch };
+  render();
+  await persistState();
+}
+
+async function resetToIdle() {
+  await chrome.storage.local.remove([UI_STATE_KEY]);
+  uiState = {
+    status: "idle",
+    startedAt: null,
+    sessionId: null,
+    meetingDetected: uiState.meetingDetected,
+    meetingProvider: uiState.meetingProvider,
+    meetingTitle: ""
+  };
   render();
   await persistState();
 }
@@ -216,15 +252,17 @@ async function onPrimaryClick() {
   }
 
   if (uiState.status === "recording") {
+    await setUiState({ status: "processing", startedAt: null });
+
     const response = await chrome.runtime.sendMessage({ type: "stopRecording" });
     if (!response?.ok) {
       statusCard.textContent = response?.error || "Unable to stop recording";
+      await setUiState({ status: "idle", startedAt: null });
       return;
     }
 
     await setUiState({
       status: "done",
-      startedAt: null,
       sessionId: response.session_id || uiState.sessionId
     });
   }
@@ -243,7 +281,12 @@ primaryBtn.addEventListener("click", () => {
 });
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type !== "status") return;
+  if (message?.type !== "status" && message?.type !== "PIPELINE_COMPLETE") return;
+
+  if (message.type === "PIPELINE_COMPLETE") {
+    setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
+    return;
+  }
 
   if (message.status === "recording") {
     setUiState({ status: "recording" }).catch(() => {});

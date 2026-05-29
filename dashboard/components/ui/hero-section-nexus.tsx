@@ -6,6 +6,7 @@ import React, {
     type ReactNode, type SVGProps,
 } from "react";
 import Image from "next/image";
+import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import HeroBadge from "@/components/ui/hero-badge";
 import {
     Navbar, NavBody, NavItems, NavbarLogo, NavbarButton,
@@ -20,6 +21,15 @@ import {
 function cn(...classes: (string | undefined | null | boolean)[]): string {
     return classes.filter(Boolean).join(" ");
 }
+
+const worksWithTools = [
+    { id: 1, name: "Slack", image: "/slack.png" },
+    { id: 2, name: "Notion", image: "/notion.png" },
+    { id: 3, name: "HubSpot", image: "/hubspot.png" },
+    { id: 4, name: "Linear", image: "/linear.png" },
+    { id: 5, name: "Zoom", image: "/zoom.png" },
+    { id: 6, name: "Google Meet", image: "/google-meet.png" },
+];
 
 interface RotatingTextRef { next: () => void; previous: () => void; jumpTo: (index: number) => void; reset: () => void; }
 
@@ -261,9 +271,9 @@ const InteractiveHero: React.FC = () => {
     const imageV: Variants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.6, delay: d + inc * 6, ease: [0.16, 1, 0.3, 1] } } };
 
     return (
-        <div className="relative bg-[#0D0D0D] text-gray-300 min-h-screen flex flex-col overflow-x-hidden">
+        <div className="relative bg-black text-gray-300 min-h-screen flex flex-col overflow-x-hidden">
             <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none opacity-80" />
-            <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, #0D0D0D 90%), radial-gradient(ellipse at center, transparent 40%, #0D0D0D 95%)" }} />
+            <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, #000000 90%), radial-gradient(ellipse at center, transparent 40%, #000000 95%)" }} />
 
             {/* Navbar */}
             <div className="relative z-30 w-full">
@@ -342,11 +352,7 @@ const InteractiveHero: React.FC = () => {
 
                 <motion.div variants={worksV} initial="hidden" animate="visible" className="flex flex-col items-center justify-center space-y-3 mb-10">
                     <span className="text-xs uppercase text-gray-500 tracking-wider font-medium">Works with</span>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        {["Slack", "Notion", "HubSpot", "Linear", "Zoom", "Google Meet"].map((name) => (
-                            <span key={name} className="px-3 py-1 rounded-full border border-gray-700 text-gray-400 text-xs font-medium">{name}</span>
-                        ))}
-                    </div>
+                    <AnimatedTooltip items={worksWithTools} />
                 </motion.div>
 
                 <motion.div variants={imageV} initial="hidden" animate="visible" className="w-full max-w-4xl mx-auto px-4 sm:px-0">

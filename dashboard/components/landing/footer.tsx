@@ -2,107 +2,312 @@
 
 import Image from "next/image";
 import Link from "next/link";
-// lucide v1 dropped Twitter/Linkedin — using inline SVGs
+import { ChevronRight } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const columns = [
+import { cn } from "@/lib/utils";
+
+type FooterLinkColumn = {
+  title: string;
+  links: {
+    id: number;
+    title: string;
+    url: string;
+  }[];
+};
+
+const footerLinks: FooterLinkColumn[] = [
   {
-    heading: "Product",
+    title: "Product",
     links: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Dashboard", href: "/dashboard" },
-      { label: "Chrome Extension", href: "#" },
+      { id: 1, title: "Features", url: "#features" },
+      { id: 2, title: "Pricing", url: "#pricing" },
+      { id: 3, title: "Dashboard", url: "/dashboard" },
+      { id: 4, title: "Chrome Extension", url: "#" },
     ],
   },
   {
-    heading: "Integrations",
+    title: "Integrations",
     links: [
-      { label: "Slack", href: "#" },
-      { label: "Notion", href: "#" },
-      { label: "HubSpot", href: "#" },
-      { label: "Linear", href: "#" },
+      { id: 5, title: "Slack", url: "#" },
+      { id: 6, title: "Notion", url: "#" },
+      { id: 7, title: "HubSpot", url: "#" },
+      { id: 8, title: "Linear", url: "#" },
     ],
   },
   {
-    heading: "Use Cases",
+    title: "Use Cases",
     links: [
-      { label: "Sales Teams", href: "#" },
-      { label: "Product Managers", href: "#" },
-      { label: "Financial Advisors", href: "#" },
+      { id: 9, title: "Sales Teams", url: "#" },
+      { id: 10, title: "Product Managers", url: "#" },
+      { id: 11, title: "Financial Advisors", url: "#" },
+      { id: 12, title: "Operations", url: "#" },
     ],
   },
   {
-    heading: "Company",
+    title: "Company",
     links: [
-      { label: "About", href: "#" },
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
-      { label: "Contact", href: "mailto:hello@minutz.ai" },
+      { id: 13, title: "About", url: "#" },
+      { id: 14, title: "Privacy", url: "#" },
+      { id: 15, title: "Terms", url: "#" },
+      { id: 16, title: "Contact", url: "mailto:hello@minutz.ai" },
     ],
   },
 ];
 
-export function Footer() {
+const trustBadges = ["SOC 2 ready", "Encrypted", "No bot joins"];
+
+interface FlickeringGridProps extends React.HTMLAttributes<HTMLDivElement> {
+  squareSize?: number;
+  gridGap?: number;
+  flickerChance?: number;
+  color?: string;
+  maxOpacity?: number;
+  text?: string;
+  fontSize?: number;
+  fontWeight?: number | string;
+}
+
+function FlickeringGrid({
+  squareSize = 3,
+  gridGap = 3,
+  flickerChance = 0.12,
+  color = "255, 106, 0",
+  maxOpacity = 0.28,
+  text = "",
+  fontSize = 96,
+  fontWeight = 700,
+  className,
+  ...props
+}: FlickeringGridProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  const drawGrid = useCallback(
+    (
+      ctx: CanvasRenderingContext2D,
+      width: number,
+      height: number,
+      cols: number,
+      rows: number,
+      squares: Float32Array,
+      dpr: number,
+    ) => {
+      ctx.clearRect(0, 0, width, height);
+
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = width;
+      maskCanvas.height = height;
+      const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+      if (!maskCtx) return;
+
+      if (text) {
+        maskCtx.save();
+        maskCtx.scale(dpr, dpr);
+        maskCtx.fillStyle = "white";
+        maskCtx.font = `${fontWeight} ${fontSize}px var(--font-inter), system-ui, sans-serif`;
+        maskCtx.textAlign = "center";
+        maskCtx.textBaseline = "middle";
+        maskCtx.fillText(text, width / (2 * dpr), height / (2 * dpr));
+        maskCtx.restore();
+      }
+
+      for (let col = 0; col < cols; col++) {
+        for (let row = 0; row < rows; row++) {
+          const x = col * (squareSize + gridGap) * dpr;
+          const y = row * (squareSize + gridGap) * dpr;
+          const squareWidth = squareSize * dpr;
+          const squareHeight = squareSize * dpr;
+          const maskData = maskCtx.getImageData(x, y, squareWidth, squareHeight).data;
+          const hasText = maskData.some((value, index) => index % 4 === 0 && value > 0);
+          const opacity = squares[col * rows + row];
+
+          ctx.fillStyle = `rgba(${color}, ${hasText ? Math.min(0.9, opacity * 3 + 0.18) : opacity})`;
+          ctx.fillRect(x, y, squareWidth, squareHeight);
+        }
+      }
+    },
+    [color, fontSize, fontWeight, gridGap, squareSize, text],
+  );
+
+  const setupCanvas = useCallback(
+    (canvas: HTMLCanvasElement, width: number, height: number) => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      const cols = Math.ceil(width / (squareSize + gridGap));
+      const rows = Math.ceil(height / (squareSize + gridGap));
+      const squares = new Float32Array(cols * rows);
+
+      for (let index = 0; index < squares.length; index++) {
+        squares[index] = Math.random() * maxOpacity;
+      }
+
+      return { cols, rows, squares, dpr };
+    },
+    [gridGap, maxOpacity, squareSize],
+  );
+
+  const updateSquares = useCallback(
+    (squares: Float32Array, deltaTime: number) => {
+      for (let index = 0; index < squares.length; index++) {
+        if (Math.random() < flickerChance * deltaTime) {
+          squares[index] = Math.random() * maxOpacity;
+        }
+      }
+    },
+    [flickerChance, maxOpacity],
+  );
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let gridParams = setupCanvas(canvas, container.clientWidth, container.clientHeight);
+    let lastTime = 0;
+
+    const updateCanvasSize = () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      setCanvasSize({ width, height });
+      gridParams = setupCanvas(canvas, width, height);
+      drawGrid(ctx, canvas.width, canvas.height, gridParams.cols, gridParams.rows, gridParams.squares, gridParams.dpr);
+    };
+
+    const animate = (time: number) => {
+      if (!isInView) return;
+
+      const deltaTime = (time - lastTime) / 1000;
+      lastTime = time;
+
+      updateSquares(gridParams.squares, deltaTime);
+      drawGrid(ctx, canvas.width, canvas.height, gridParams.cols, gridParams.rows, gridParams.squares, gridParams.dpr);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+    const intersectionObserver = new IntersectionObserver(([entry]) => {
+      setIsInView(entry.isIntersecting);
+    });
+
+    updateCanvasSize();
+    resizeObserver.observe(container);
+    intersectionObserver.observe(canvas);
+
+    if (isInView) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+    };
+  }, [drawGrid, isInView, setupCanvas, updateSquares]);
+
   return (
-    <footer className="border-t border-[#E5E5E5] py-16 dark:border-[#2A2A2A]">
-      <div className="mx-auto max-w-6xl px-6">
-        {/* Link grid */}
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
-          {columns.map((col) => (
-            <div key={col.heading}>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">
-                {col.heading}
-              </p>
-              <ul className="space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-[#6B6B6B] transition-colors hover:text-[#000000] dark:text-[#A3A3A3] dark:hover:text-white"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+    <div ref={containerRef} className={cn("h-full w-full", className)} {...props}>
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none"
+        style={{ width: canvasSize.width, height: canvasSize.height }}
+      />
+    </div>
+  );
+}
+
+function useMediaQuery(query: string) {
+  const [value, setValue] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const handleChange = () => setValue(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [query]);
+
+  return value;
+}
+
+export function Footer() {
+  const tablet = useMediaQuery("(max-width: 1024px)");
+  const gridText = useMemo(() => (tablet ? "Minutz" : "Make meetings useful"), [tablet]);
+
+  return (
+    <footer id="footer" className="relative overflow-hidden bg-black pb-0 text-white">
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 md:flex-row md:items-start md:justify-between">
+        <div className="flex max-w-sm flex-col items-start gap-5">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/logo-dark.png" alt="Minutz" width={104} height={26} className="h-auto" />
+          </Link>
+          <p className="text-sm font-medium leading-relaxed text-[#A3A3A3]">
+            Invisible AI meeting intelligence for teams that need decisions, action items, and summaries before the tab closes.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {trustBadges.map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-[#A3A3A3]"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-[#6B6B6B]">
+            © 2026 Minutz. Built by{' '}
+            <a href="https://x.com/bydhruvil" target="_blank" rel="noopener noreferrer">
+              @bydhruvil
+            </a>
+            .
+          </p>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#E5E5E5] pt-8 dark:border-[#2A2A2A] md:flex-row">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image src="/logo-light.png" alt="Minutz" width={90} height={22} style={{ height: "auto" }} className="block dark:hidden" />
-            <Image src="/logo-dark.png" alt="Minutz" width={90} height={22} style={{ height: "auto" }} className="hidden dark:block" />
-          </Link>
+        <div className="grid flex-1 grid-cols-2 gap-8 md:max-w-2xl md:grid-cols-4">
+          {footerLinks.map((column) => (
+            <ul key={column.title} className="flex flex-col gap-2">
+              <li className="mb-2 text-sm font-semibold text-white">{column.title}</li>
+              {column.links.map((link) => (
+                <li
+                  key={link.id}
+                  className="group inline-flex w-fit cursor-pointer items-center justify-start gap-1 text-sm text-[#A3A3A3] transition-colors hover:text-white"
+                >
+                  <Link href={link.url}>{link.title}</Link>
+                  <span className="flex size-4 translate-x-0 items-center justify-center rounded border border-white/10 text-[#FF6A00] opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                    <ChevronRight className="h-3 w-3" />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
 
-          {/* Copyright */}
-          <p className="text-sm text-[#A3A3A3]">
-            © 2026 Minutz. Built with Claude Code + OpenAI
-          </p>
-
-          {/* Social */}
-          <div className="flex items-center gap-4">
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#6B6B6B] transition-colors hover:text-[#000000] dark:text-[#A3A3A3] dark:hover:text-white"
-              aria-label="Twitter"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#6B6B6B] transition-colors hover:text-[#000000] dark:text-[#A3A3A3] dark:hover:text-white"
-              aria-label="LinkedIn"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-            </a>
-          </div>
+      <div className="relative z-0 mt-12 h-48 w-full md:h-64">
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-40% to-black" />
+        <div className="absolute inset-0 mx-6">
+          <FlickeringGrid
+            text={gridText}
+            fontSize={tablet ? 72 : 104}
+            className="h-full w-full"
+            squareSize={2}
+            gridGap={tablet ? 2 : 3}
+            color="255, 106, 0"
+            maxOpacity={0.3}
+            flickerChance={0.1}
+          />
         </div>
       </div>
     </footer>

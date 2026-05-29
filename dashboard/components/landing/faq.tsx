@@ -43,7 +43,7 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section className="py-28">
+    <section className="bg-black py-28">
       <div className="mx-auto max-w-2xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

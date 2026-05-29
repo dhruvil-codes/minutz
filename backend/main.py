@@ -33,8 +33,8 @@ app = FastAPI(title="Minutz API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -198,15 +198,18 @@ async def finalize(session_id: str, body: FinalizeBody):
         try:
             from pydub import AudioSegment
 
-            print(f"[finalize] assembling {len(chunks)} chunks")
-            combined = AudioSegment.empty()
-            for i, chunk_path in enumerate(chunks):
-                fmt = chunk_path.suffix.lstrip(".")
-                print(f"[finalize] chunk {i}: {chunk_path.name} format={fmt}")
-                segment = AudioSegment.from_file(str(chunk_path), format=fmt)
-                print(f"[finalize] chunk {i} duration={len(segment)}ms")
-                combined += segment
+            # Concatenate raw bytes first — only chunk_0 has the webm EBML header,
+            # subsequent chunks are continuation data and can't be opened individually.
+            print(f"[finalize] concatenating {len(chunks)} chunks as raw bytes")
+            combined_bytes = b""
+            for chunk_path in chunks:
+                combined_bytes += chunk_path.read_bytes()
 
+            combined_webm = session_dir / "combined.webm"
+            combined_webm.write_bytes(combined_bytes)
+            print(f"[finalize] combined webm size={len(combined_bytes) / 1024:.1f} KB")
+
+            combined = AudioSegment.from_file(str(combined_webm), format="webm")
             duration_seconds = len(combined) / 1000
             print(f"[finalize] total duration={duration_seconds:.1f}s")
 
@@ -358,8 +361,33 @@ def _summarize_token_aware(system_prompt: str, transcript: str) -> dict[str, Any
 @app.post("/summarize")
 async def summarize(body: SummarizeBody):
     niche = body.niche if body.niche in PROMPTS else "general"
-    system_prompt = PROMPTS[niche]
 
+    # Short transcript guard — skip GPT-4o and return sensible defaults
+    word_count = len(body.transcript.split())
+    if len(body.transcript.strip()) < 50 or word_count < 10:
+        print(f"[summarize] transcript too short ({len(body.transcript)} chars, {word_count} words), skipping GPT")
+        base_data = {
+            "executive_summary": "Recording too short to summarize. Please record at least 30 seconds of speech.",
+            "action_items": [],
+            "decisions": [],
+            "follow_ups": [],
+            "sentiment": "neutral",
+            "urgency": "low",
+        }
+        try:
+            supabase.table("summaries").upsert({
+                "meeting_id": body.meeting_id,
+                **base_data,
+                "niche_data": {},
+            }).execute()
+            supabase.table("meetings").update({"status": "completed"}).eq(
+                "id", body.meeting_id
+            ).execute()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Database error: {e}")
+        return {**base_data, "niche_data": {}, "meeting_id": body.meeting_id, "short_transcript": True}
+
+    system_prompt = PROMPTS[niche]
     try:
         parsed = _summarize_token_aware(system_prompt, body.transcript)
     except json.JSONDecodeError as e:
