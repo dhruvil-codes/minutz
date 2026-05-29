@@ -1,24 +1,25 @@
 const UI_STATE_KEY = "popupUiState";
 
-const statusDot = document.getElementById("statusDot");
-const meetingBadge = document.getElementById("meetingBadge");
-const meetingTitleInput = document.getElementById("meetingTitleInput");
-const statusCard = document.getElementById("statusCard");
-const statusText = document.getElementById("statusText");
-const statusSubtext = document.getElementById("statusSubtext");
-const statusDotLabel = document.getElementById("statusDotLabel");
-const historyBtn = document.getElementById("historyBtn");
-const historyBackBtn = document.getElementById("historyBackBtn");
-const historyPanel = document.getElementById("historyPanel");
-const historyList = document.getElementById("historyList");
-const primaryBtn = document.getElementById("primaryBtn");
-const authScreen = document.getElementById("authScreen");
-const mainUi = document.getElementById("mainUi");
-const authLoginBtn = document.getElementById("authLoginBtn");
-const authConfirmBtn = document.getElementById("authConfirmBtn");
-const authStatus = document.getElementById("authStatus");
+document.addEventListener("DOMContentLoaded", () => {
+console.log("[Minutz Popup] JS loaded");
 
-if (mainUi) mainUi.hidden = true;
+let statusDot = null;
+let meetingBadge = null;
+let meetingTitleInput = null;
+let statusCard = null;
+let statusText = null;
+let statusSubtext = null;
+let statusDotLabel = null;
+let historyBtn = null;
+let historyBackBtn = null;
+let historyPanel = null;
+let historyList = null;
+let primaryBtn = null;
+let authScreen = null;
+let mainUi = null;
+let signInBtn = null;
+let iveSignedInBtn = null;
+let authError = null;
 
 let timerHandle = null;
 let pipelineStage = null;
@@ -108,16 +109,39 @@ function startTimer() {
   }, 1000);
 }
 
+function setScreenVisibility({ authVisible }) {
+  if (authScreen) {
+    authScreen.hidden = !authVisible;
+    authScreen.style.display = authVisible ? "flex" : "none";
+  }
+
+  if (mainUi) {
+    mainUi.hidden = authVisible;
+    mainUi.style.display = authVisible ? "none" : "flex";
+  }
+}
+
 function showMainUi() {
-  if (authScreen) authScreen.hidden = true;
-  if (mainUi) mainUi.hidden = false;
+  setScreenVisibility({ authVisible: false });
+}
+
+function showMainUI() {
+  showMainUi();
 }
 
 function showAuthScreen() {
   stopTimer();
-  if (mainUi) mainUi.hidden = true;
-  if (authScreen) authScreen.hidden = false;
-  if (authStatus) authStatus.textContent = "";
+  setScreenVisibility({ authVisible: true });
+  if (authError) {
+    authError.style.display = "none";
+    authError.textContent = "";
+  }
+}
+
+function showError(message) {
+  if (!authError) return;
+  authError.style.display = "block";
+  authError.textContent = message;
 }
 
 async function waitForStoredUser(maxAttempts = 20, delayMs = 250) {
@@ -500,127 +524,165 @@ async function onPrimaryClick() {
   }
 }
 
-if (meetingTitleInput) {
-  meetingTitleInput.addEventListener("input", () => {
-    setUiState({ meetingTitle: normalizeMeetingTitle(meetingTitleInput.value) }).catch(() => {});
+  statusDot = document.getElementById("statusDot");
+  meetingBadge = document.getElementById("meetingBadge");
+  meetingTitleInput = document.getElementById("meetingTitleInput");
+  statusCard = document.getElementById("statusCard");
+  statusText = document.getElementById("statusText");
+  statusSubtext = document.getElementById("statusSubtext");
+  statusDotLabel = document.getElementById("statusDotLabel");
+  historyBtn = document.getElementById("historyBtn");
+  historyBackBtn = document.getElementById("historyBackBtn");
+  historyPanel = document.getElementById("historyPanel");
+  historyList = document.getElementById("historyList");
+  primaryBtn = document.getElementById("primaryBtn");
+  authScreen = document.getElementById("authScreen");
+  mainUi = document.getElementById("mainUi");
+  signInBtn = document.getElementById("signInBtn");
+  iveSignedInBtn = document.getElementById("iveSignedInBtn");
+  authError = document.getElementById("authError");
+
+  console.log("[Minutz Popup] Auth button IDs:", {
+    signInBtn: signInBtn ? signInBtn.id : null,
+    iveSignedInBtn: iveSignedInBtn ? iveSignedInBtn.id : null
   });
-}
 
-if (authLoginBtn) {
-  authLoginBtn.addEventListener("click", () => {
-    window.open("http://localhost:3000/login?redirect=/auth/extension", "_blank");
-  });
-}
+  if (authScreen) {
+    authScreen.style.display = "flex";
+    authScreen.hidden = false;
+  }
+  if (mainUi) {
+    mainUi.style.display = "none";
+    mainUi.hidden = true;
+  }
+  if (historyPanel) {
+    historyPanel.hidden = true;
+  }
 
-if (authConfirmBtn) {
-  authConfirmBtn.addEventListener("click", () => {
-    const originalLabel = authConfirmBtn.textContent;
-    authConfirmBtn.disabled = true;
-    authConfirmBtn.textContent = "Checking...";
-    if (authStatus) authStatus.textContent = "";
+  if (meetingTitleInput) {
+    meetingTitleInput.addEventListener("input", () => {
+      setUiState({ meetingTitle: normalizeMeetingTitle(meetingTitleInput.value) }).catch(() => {});
+    });
+  }
 
-    waitForStoredUser()
-      .then((storedUser) => {
-        if (!storedUser) {
-          throw new Error("Sign-in not detected yet. Please return to the dashboard and wait a moment.");
+  if (signInBtn) {
+    signInBtn.addEventListener("click", () => {
+      console.log("[Minutz Popup] Button clicked:", "signInBtn");
+      chrome.tabs.create({ url: "http://localhost:3000/login" });
+    });
+  }
+
+  if (iveSignedInBtn) {
+    iveSignedInBtn.addEventListener("click", () => {
+      console.log("[Minutz Popup] Button clicked:", "iveSignedInBtn");
+      chrome.storage.local.get(["minutz_user"], (result) => {
+        if (result?.minutz_user) {
+          showMainUI();
+          hydrateState().catch((error) => {
+            showError(error?.message || "Failed to load extension");
+          });
+        } else {
+          showError("Sign in not detected yet. Please return to the dashboard and wait a moment.");
         }
-        return hydrateState();
-      })
-      .catch((error) => {
-        if (authScreen) authScreen.hidden = false;
-        if (mainUi) mainUi.hidden = true;
-        if (authStatus) authStatus.textContent = error?.message || "Failed to verify sign-in";
-      })
-      .finally(() => {
-        authConfirmBtn.disabled = false;
-        authConfirmBtn.textContent = originalLabel || "I've signed in ✓";
       });
-  });
-}
+    });
+  }
 
-window.addEventListener("message", (event) => {
-  if (event.origin !== "http://localhost:3000") return;
-  if (event.data?.type !== "MINUTZ_AUTH") return;
+  window.addEventListener("message", (event) => {
+    if (event.origin !== "http://localhost:3000") return;
+    if (event.data?.type !== "MINUTZ_AUTH") return;
 
-  const user = event.data?.user;
-  if (!user?.email || !(user?.token || user?.id)) return;
+    const user = event.data?.user;
+    if (!user?.email || !(user?.token || user?.id)) return;
 
-  if (authStatus) authStatus.textContent = `Signed in as ${user.email}. Loading extension...`;
+    if (authError) {
+      authError.style.display = "block";
+      authError.textContent = `Signed in as ${user.email}. Loading extension...`;
+    }
 
-  chrome.storage.local.set({ minutz_user: user }, () => {
-    void chrome.runtime.lastError;
-    hydrateState().catch((error) => {
-      if (authStatus) authStatus.textContent = error?.message || "Failed to load extension";
+    chrome.storage.local.set({ minutz_user: user }, () => {
+      void chrome.runtime.lastError;
+      hydrateState().catch((error) => {
+        if (authError) {
+          authError.style.display = "block";
+          authError.textContent = error?.message || "Failed to load extension";
+        }
+      });
     });
   });
-});
 
-if (historyBtn) {
-  historyBtn.addEventListener("click", () => {
-    showHistoryPanel();
-    loadHistory().catch(() => {});
-  });
-}
+  if (historyBtn) {
+    historyBtn.addEventListener("click", () => {
+      console.log("[Minutz Popup] Button clicked:", "historyBtn");
+      showHistoryPanel();
+      loadHistory().catch(() => {});
+    });
+  }
 
-if (historyBackBtn) {
-  historyBackBtn.addEventListener("click", () => {
-    hideHistoryPanel();
-  });
-}
+  if (historyBackBtn) {
+    historyBackBtn.addEventListener("click", () => {
+      console.log("[Minutz Popup] Button clicked:", "historyBackBtn");
+      hideHistoryPanel();
+    });
+  }
 
-primaryBtn.addEventListener("click", () => {
-  onPrimaryClick().catch((error) => {
-    setStatusCard(error?.message || "Unexpected error", "", "idle");
-  });
-});
+  if (primaryBtn) {
+    primaryBtn.addEventListener("click", () => {
+      console.log("[Minutz Popup] Button clicked:", "primaryBtn");
+      onPrimaryClick().catch((error) => {
+        setStatusCard(error?.message || "Unexpected error", "", "idle");
+      });
+    });
+  }
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === "STATUS_UPDATE") {
-    pipelineStage = message.status || null;
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "STATUS_UPDATE") {
+      pipelineStage = message.status || null;
 
-    if (message.status === "uploading") {
-      setStatusCard("Uploading audio...", "Sending your recording to the server", "uploading");
+      if (message.status === "uploading") {
+        setStatusCard("Uploading audio...", "Sending your recording to the server", "uploading");
+        return;
+      }
+
+      if (message.status === "transcribing") {
+        setStatusCard("Transcribing...", "Whisper is converting your audio to text", "transcribing");
+        return;
+      }
+
+      if (message.status === "analyzing") {
+        setStatusCard("Analyzing with AI...", "GPT-4o is extracting your summary and action items", "analyzing");
+        return;
+      }
+
+      if (message.status === "done") {
+        setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
+        setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
+      }
       return;
     }
 
-    if (message.status === "transcribing") {
-      setStatusCard("Transcribing...", "Whisper is converting your audio to text", "transcribing");
-      return;
-    }
-
-    if (message.status === "analyzing") {
-      setStatusCard("Analyzing with AI...", "GPT-4o is extracting your summary and action items", "analyzing");
-      return;
-    }
-
-    if (message.status === "done") {
+    if (message?.type === "PIPELINE_COMPLETE") {
       setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
       setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
+      return;
     }
-    return;
-  }
 
-  if (message?.type === "PIPELINE_COMPLETE") {
-    setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
-    setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
-    return;
-  }
+    if (message?.type !== "status") return;
 
-  if (message?.type !== "status") return;
+    if (message.status === "recording") {
+      setUiState({ status: "recording" }).catch(() => {});
+      return;
+    }
 
-  if (message.status === "recording") {
-    setUiState({ status: "recording" }).catch(() => {});
-    return;
-  }
+    if (message.status === "error") {
+      stopTimer();
+      pipelineStage = null;
+      setStatusCard(message.detail || "Something went wrong", "", "idle");
+      setUiState({ status: "idle", startedAt: null }).catch(() => {});
+    }
+  });
 
-  if (message.status === "error") {
-    stopTimer();
-    pipelineStage = null;
-    setStatusCard(message.detail || "Something went wrong", "", "idle");
-    setUiState({ status: "idle", startedAt: null }).catch(() => {});
-  }
-});
-
-hydrateState().catch((error) => {
-  setStatusCard(error?.message || "Failed to initialize", "", "idle");
+  hydrateState().catch((error) => {
+    setStatusCard(error?.message || "Failed to initialize", "", "idle");
+  });
 });

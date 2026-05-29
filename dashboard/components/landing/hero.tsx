@@ -51,7 +51,7 @@ export function Hero() {
           <ShimmerButton
             background="#FF6A00"
             className="h-11 px-7 text-sm font-semibold"
-            onClick={() => { window.location.href = "/login"; }}
+            onClick={() => { window.location.href = "/signup"; }}
           >
             Get Started Free
           </ShimmerButton>

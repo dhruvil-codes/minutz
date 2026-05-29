@@ -41,7 +41,7 @@ export function Navbar() {
           <Link href="/login" className="text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]">
             Sign In
           </Link>
-          <Link href="/login" className="rounded-lg bg-[#FF6A00] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">
+          <Link href="/signup" className="rounded-lg bg-[#FF6A00] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">
             Get Started
           </Link>
         </div>
@@ -63,7 +63,7 @@ export function Navbar() {
               ))}
               <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-6">
                 <Link href="/login" onClick={() => setOpen(false)} className="text-sm font-medium text-[var(--color-text-secondary)]">Sign In</Link>
-                <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg bg-[#FF6A00] px-4 py-2.5 text-center text-sm font-semibold text-white">Get Started</Link>
+                <Link href="/signup" onClick={() => setOpen(false)} className="rounded-lg bg-[#FF6A00] px-4 py-2.5 text-center text-sm font-semibold text-white">Get Started</Link>
               </div>
             </div>
           </SheetContent>

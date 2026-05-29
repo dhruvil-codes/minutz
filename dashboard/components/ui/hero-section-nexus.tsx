@@ -288,11 +288,11 @@ const InteractiveHero: React.FC = () => {
                                 className="relative z-[80] inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:border-[#FF6A00]/50 hover:text-[var(--color-text-primary)]"
                                 aria-label="Toggle theme"
                             />
-                            <ShimmerButton
-                                href="/login"
-                                borderRadius="9999px"
-                                background="var(--color-surface)"
-                                className="px-4 py-1.5 text-sm font-medium"
+                          <ShimmerButton
+                            href="/login"
+                            borderRadius="9999px"
+                            background="var(--color-surface)"
+                            className="px-4 py-1.5 text-sm font-medium"
                             >
                                 Login
                             </ShimmerButton>
@@ -374,7 +374,7 @@ const InteractiveHero: React.FC = () => {
                     >
                         Install Chrome Extension
                     </ShimmerButton>
-                    <a href="/login" className="rounded-md bg-[#FF6A00] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">Sign Up</a>
+                    <a href="/signup" className="rounded-md bg-[#FF6A00] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">Sign Up</a>
                 </motion.div>
 
                 <motion.p variants={trialV} initial="hidden" animate="visible" className="mb-10 text-xs text-[var(--color-text-secondary)]">
