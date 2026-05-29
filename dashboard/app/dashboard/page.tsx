@@ -151,7 +151,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const extensionSyncRef = useRef(false);
   const extensionSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchMeetings = useCallback(async () => {
@@ -205,8 +204,6 @@ export default function DashboardPage() {
 
       const payload = { email: user.email, token };
 
-      extensionSyncRef.current = true;
-
       if (typeof window !== "undefined" && (window as any).chrome?.runtime) {
         (window as any).chrome.runtime.sendMessage({ type: "SET_USER", user: payload }, () => {
           void (window as any).chrome.runtime.lastError;
@@ -214,6 +211,7 @@ export default function DashboardPage() {
       }
 
       window.dispatchEvent(new CustomEvent("minutz:set-user", { detail: payload }));
+      document.dispatchEvent(new CustomEvent("minutz:set-user", { detail: payload }));
     };
 
     const stopRetrying = () => {
@@ -225,18 +223,13 @@ export default function DashboardPage() {
 
     syncExtensionUser().catch(() => {});
     extensionSyncIntervalRef.current = setInterval(() => {
-      if (!extensionSyncRef.current) {
-        syncExtensionUser().catch(() => {});
-      } else {
-        stopRetrying();
-      }
+      syncExtensionUser().catch(() => {});
     }, 2000);
 
     const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      extensionSyncRef.current = false;
       syncExtensionUser().catch(() => {});
     });
 

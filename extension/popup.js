@@ -124,7 +124,7 @@ async function waitForStoredUser(maxAttempts = 20, delayMs = 250) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const authState = await chrome.storage.local.get(["minutz_user"]);
     const storedUser = authState?.minutz_user;
-    if (storedUser?.email && storedUser?.token) {
+    if (storedUser?.email && (storedUser?.token || storedUser?.id)) {
       return storedUser;
     }
     await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -412,7 +412,7 @@ async function hydrateState() {
   const authState = await chrome.storage.local.get(["minutz_user"]);
   const storedUser = authState?.minutz_user;
 
-  if (!storedUser?.email || !storedUser?.token) {
+  if (!storedUser?.email || !(storedUser?.token || storedUser?.id)) {
     showAuthScreen();
     return;
   }
@@ -499,7 +499,7 @@ if (meetingTitleInput) {
 
 if (authLoginBtn) {
   authLoginBtn.addEventListener("click", () => {
-    window.open("http://localhost:3000/login", "_blank", "noopener,noreferrer");
+    window.open("http://localhost:3000/login?redirect=/auth/extension", "_blank");
   });
 }
 
@@ -528,6 +528,23 @@ if (authConfirmBtn) {
       });
   });
 }
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "http://localhost:3000") return;
+  if (event.data?.type !== "MINUTZ_AUTH") return;
+
+  const user = event.data?.user;
+  if (!user?.email || !(user?.token || user?.id)) return;
+
+  if (authStatus) authStatus.textContent = `Signed in as ${user.email}. Loading extension...`;
+
+  chrome.storage.local.set({ minutz_user: user }, () => {
+    void chrome.runtime.lastError;
+    hydrateState().catch((error) => {
+      if (authStatus) authStatus.textContent = error?.message || "Failed to load extension";
+    });
+  });
+});
 
 if (historyBtn) {
   historyBtn.addEventListener("click", () => {

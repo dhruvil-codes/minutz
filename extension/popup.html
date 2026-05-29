@@ -6,364 +6,422 @@
   <title>Minutz</title>
   <style>
     :root {
-      --color-bg: #0d0d0d;
-      --color-surface: #1a1a1a;
-      --color-border: #2a2a2a;
-      --color-text-primary: #ffffff;
-      --color-text-secondary: #a3a3a3;
-      --color-text-tertiary: #6b6b6b;
-      --color-accent: #ff6a00;
-      --color-accent-hover: #ff7a1a;
-      --color-accent-subtle: #2a1800;
-      --color-danger: #ef4444;
-      --gradient-accent: linear-gradient(90deg, #ff6a00, #ffb347);
-      --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+      --bg: #0d0d0d;
+      --panel: #1a1a1a;
+      --panel-2: #161616;
+      --border: #2a2a2a;
+      --text: #ffffff;
+      --muted: #6b6b6b;
+      --muted-2: #3a3a3a;
+      --accent: #ff6a00;
+      --accent-2: #ff8c00;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html, body {
-      height: 100%;
+    html,
+    body {
+      width: 380px;
+      min-height: 420px;
+      margin: 0;
+      background: var(--bg);
     }
 
     body {
-      margin: 0;
-      width: 320px;
+      position: relative;
       padding: 20px;
-      min-height: 100%;
-      background: var(--color-bg);
-      color: var(--color-text-primary);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      overflow: hidden;
     }
 
-    .popup { display: flex; flex-direction: column; gap: 12px; }
-
-    #authScreen[hidden],
-    #mainUi[hidden] {
-      display: none !important;
+    button,
+    input {
+      font: inherit;
     }
 
-    #authScreen {
-      min-height: calc(100vh - 40px);
+    button {
+      color: inherit;
+    }
+
+    #mainUi,
+    #authScreen,
+    #historyPanel {
+      position: relative;
+      z-index: 1;
+    }
+
+    #mainUi {
       display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .auth-card {
-      width: 100%;
-      max-width: 280px;
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      border-radius: 12px;
-      padding: 18px 16px 16px;
-      text-align: center;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
-    }
-
-    .auth-logo {
-      display: block;
-      width: 76px;
-      height: auto;
-      margin: 0 auto 14px;
-    }
-
-    .auth-title {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.3;
-      color: var(--color-text-primary);
-    }
-
-    .auth-copy {
-      margin: 8px 0 14px;
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--color-text-secondary);
-    }
-
-    .auth-button {
-      width: 100%;
-      height: 40px;
-      border: none;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1;
-      cursor: pointer;
-      transition: background 150ms var(--ease-snap), border-color 150ms var(--ease-snap), color 150ms var(--ease-snap), opacity 150ms var(--ease-snap);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .auth-button.primary {
-      background: var(--color-accent);
-      color: var(--color-text-primary);
-    }
-    .auth-button.primary:hover { background: var(--color-accent-hover); }
-
-    .auth-button.secondary {
-      margin-top: 8px;
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-text-secondary);
-    }
-    .auth-button.secondary:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
-
-    .auth-note {
-      margin: 10px 0 0;
-      font-size: 10px;
-      line-height: 1.4;
-      color: var(--color-text-tertiary);
-    }
-
-    .auth-status {
-      min-height: 16px;
-      margin: 10px 0 0;
-      font-size: 11px;
-      line-height: 1.4;
-      color: var(--color-text-secondary);
+      flex-direction: column;
+      min-height: 380px;
     }
 
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
+      margin-bottom: 24px;
     }
 
-    .brand { display: inline-flex; align-items: center; min-width: 0; }
-    .brand-logo { height: 28px; width: auto; display: block; }
-
-    .header-controls {
+    .brand {
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .status-stack {
-      display: inline-flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
-      line-height: 1;
+      min-width: 0;
     }
 
-    .status-head {
-      display: inline-flex;
+    .brand img {
+      display: block;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      object-fit: contain;
+      image-rendering: auto;
+    }
+
+    .brand-text {
+      margin-left: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
-    .history-btn {
+    #historyBtn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
-      padding: 0;
+      padding: 4px;
       border: none;
-      background: transparent;
-      color: #a3a3a3;
+      background: none;
+      color: var(--muted);
       cursor: pointer;
-      transition: color 150ms var(--ease-snap);
+      transition: color 150ms ease, transform 150ms ease, opacity 150ms ease;
     }
-    .history-btn:hover { color: #ffffff; }
-    .history-btn svg { width: 16px; height: 16px; display: block; }
 
-    .dot {
+    #historyBtn:hover {
+      color: var(--text);
+    }
+
+    #historyBtn:active {
+      transform: translateY(1px);
+    }
+
+    #statusDot {
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: var(--color-text-tertiary);
-      transition: background-color 160ms var(--ease-snap), box-shadow 160ms var(--ease-snap);
-    }
-    .dot.recording { background: var(--color-accent); box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); }
-    .dot.uploading { background: #ff6a00; box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); }
-    .dot.pulsing { background: #ff6a00; box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); animation: dotPulse 1.4s ease-in-out infinite; }
-    .dot.done { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
-
-    #statusDotLabel { font-size: 9px; color: var(--color-text-tertiary); text-transform: lowercase; text-align: center; letter-spacing: 0.02em; }
-
-    .pill {
-      min-height: 34px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      line-height: 1.2;
-      color: var(--color-text-secondary);
-    }
-
-    .pill::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: var(--color-text-tertiary);
+      background: var(--muted);
       flex: 0 0 auto;
     }
 
+    #statusDotLabel {
+      font-size: 11px;
+      line-height: 1;
+      color: var(--muted);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+
+    #meetingBadge {
+      display: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #181818;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     .pill.detected {
-      border-left: 2px solid var(--color-accent);
-      padding-left: 11px;
-      color: var(--color-text-primary);
-      background: linear-gradient(90deg, rgba(255, 106, 0, 0.1) 0%, rgba(255, 106, 0, 0) 24%), var(--color-surface);
+      border-color: rgba(255, 106, 0, 0.22);
+      color: #ffbf8f;
+      background: rgba(255, 106, 0, 0.08);
     }
-    .pill.detected::before { background: var(--color-accent); }
 
-    .title-input {
-      width: 100%;
-      height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      color: var(--color-text-primary);
-      padding: 0 10px;
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 150ms var(--ease-snap), box-shadow 150ms var(--ease-snap);
-    }
-    .title-input::placeholder { color: var(--color-text-tertiary); }
-    .title-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.16); }
-
-    .card {
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      border-radius: 12px;
-      padding: 14px 16px;
-      text-align: center;
+    #detectionBanner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
       font-size: 13px;
-      line-height: 1.35;
-      color: var(--color-text-secondary);
-      min-height: 56px;
+      color: #a3a3a3;
+    }
+
+    #detectionDot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+      background: var(--muted);
+    }
+
+    #detectionBanner.active {
+      border-left: 3px solid var(--accent);
+      padding-left: 13px;
+    }
+
+    #detectionBanner.active #detectionDot {
+      background: var(--accent);
+    }
+
+    #detectionBanner.active #detectionText {
+      color: var(--text);
+    }
+
+    #meetingTitleInput {
+      width: 100%;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    #meetingTitleInput::placeholder {
+      color: var(--muted);
+    }
+
+    #meetingTitleInput:focus {
+      border-color: var(--accent);
+    }
+
+    #statusCard {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
+      min-height: 80px;
+      margin-bottom: 20px;
+      padding: 20px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      text-align: center;
+      box-shadow: var(--shadow);
     }
 
     #statusText {
-      margin: 0;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 600;
-      line-height: 1.35;
-      color: var(--color-text-primary);
+      color: var(--text);
     }
 
     #statusSubtext {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    #timerText {
+      display: none;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    #spinner,
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 999px;
+      animation: spin 0.8s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .action-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #primaryBtn,
+    .action {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 150ms ease, opacity 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    #primaryBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: var(--text);
+      box-shadow: 0 10px 24px rgba(255, 106, 0, 0.18);
+    }
+
+    #primaryBtn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    #primaryBtn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #primaryBtn.stop,
+    #primaryBtn.processing,
+    #primaryBtn.done {
+      background: #202020;
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+
+    #primaryBtn.processing .spinner {
+      display: inline-block;
+    }
+
+    .action.secondary {
+      margin-top: 10px;
+      background: #202020;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .footer {
+      margin-top: 16px;
+      text-align: center;
       font-size: 11px;
-      color: var(--color-text-tertiary);
-      margin: 0;
-      line-height: 1.4;
-    }
-
-    #mainUi {
-      position: relative;
-    }
-
-    #historyPanel[hidden] {
-      display: none !important;
+      color: var(--muted-2);
     }
 
     #historyPanel {
       position: absolute;
-      inset: 0;
-      z-index: 10;
-      background: #0d0d0d;
-      padding: 16px;
+      inset: 20px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
+      padding: 0;
+      background: var(--bg);
     }
 
-    .history-topbar {
+    .panel-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 24px;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .history-back {
-      border: none;
-      background: transparent;
-      color: #a3a3a3;
-      padding: 0;
-      font: inherit;
-      font-size: 12px;
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
       cursor: pointer;
-      transition: color 150ms var(--ease-snap);
+      transition: border-color 150ms ease, transform 150ms ease, background 150ms ease;
     }
-    .history-back:hover { color: #ffffff; }
+
+    .back-btn:hover {
+      border-color: #3a3a3a;
+    }
+
+    .history-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+      flex: 1;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-2);
+      box-shadow: var(--shadow);
+    }
+
+    .history-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
     .history-title {
-      font-size: 14px;
+      margin: 0;
+      font-size: 16px;
       font-weight: 700;
-      color: var(--color-text-primary);
+      letter-spacing: -0.02em;
     }
 
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      max-height: 220px;
-      overflow-y: auto;
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      background: #111111;
-    }
-
-    .history-empty {
-      padding: 14px 12px;
+    .history-subtitle {
       font-size: 12px;
-      color: var(--color-text-tertiary);
-      border-bottom: 1px solid var(--color-border);
+      color: var(--muted);
     }
 
-    .history-error {
-      padding: 14px 12px;
+    #historyList {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      color: var(--color-text-secondary);
-      border-bottom: 1px solid var(--color-border);
-      font-size: 12px;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 2px;
     }
 
-    .history-retry {
-      width: fit-content;
-      border: 1px solid var(--color-border);
-      background: #1a1a1a;
-      color: #ffffff;
-      border-radius: 8px;
-      padding: 8px 10px;
-      font: inherit;
-      font-size: 12px;
-      cursor: pointer;
+    .history-row,
+    .history-empty,
+    .history-error {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #181818;
     }
 
     .history-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 8px 10px;
-      padding: 10px 12px;
       cursor: pointer;
-      border-bottom: 1px solid #2a2a2a;
-      background: #1a1a1a;
-      transition: background 150ms var(--ease-snap);
+      transition: border-color 150ms ease, transform 150ms ease, background 150ms ease;
     }
-    .history-row:hover { background: #242424; }
+
+    .history-row:hover {
+      border-color: #3a3a3a;
+      transform: translateY(-1px);
+    }
 
     .history-row-main {
       min-width: 0;
@@ -373,163 +431,242 @@
     }
 
     .history-row-title {
-      font-size: 12px;
-      line-height: 1.35;
-      color: #ffffff;
-      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .history-row-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
       font-size: 11px;
-      color: #6b6b6b;
+      color: var(--muted);
     }
 
     .history-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3px 8px;
+      flex: 0 0 auto;
+      padding: 5px 8px;
       border-radius: 999px;
-      font-size: 10px;
-      font-weight: 600;
-      line-height: 1;
+      border: 1px solid var(--border);
+      font-size: 11px;
       text-transform: capitalize;
-      border: 1px solid transparent;
-    }
-    .history-badge.completed { color: #86efac; border-color: rgba(34, 197, 94, 0.25); background: rgba(34, 197, 94, 0.1); }
-    .history-badge.processing, .history-badge.pending { color: #ffb347; border-color: rgba(255, 106, 0, 0.3); background: rgba(255, 106, 0, 0.1); }
-    .history-badge.processing { animation: historyPulse 1.4s ease-in-out infinite; }
-    .history-badge.pending { color: #a3a3a3; border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.05); }
-
-    @keyframes historyPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(0.96); opacity: 0.76; }
+      color: #d7d7d7;
+      background: #202020;
     }
 
-    .action {
+    .history-badge.completed {
+      border-color: rgba(255, 106, 0, 0.28);
+      color: #ffbf8f;
+      background: rgba(255, 106, 0, 0.1);
+    }
+
+    .history-badge.processing {
+      color: #cfcfcf;
+    }
+
+    .history-badge.pending {
+      color: #a3a3a3;
+    }
+
+    .history-empty,
+    .history-error {
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      color: var(--muted);
+      min-height: 92px;
+    }
+
+    .history-error {
+      gap: 10px;
+    }
+
+    .history-retry {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #202020;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    #authScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 380px;
+    }
+
+    .auth-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .auth-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .auth-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .auth-copy {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #b0b0b0;
+    }
+
+    .auth-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .auth-action {
       width: 100%;
-      height: 40px;
-      border-radius: 8px;
-      border: none;
-      font-family: inherit;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #202020;
+      color: var(--text);
       font-size: 13px;
       font-weight: 600;
-      line-height: 1;
       cursor: pointer;
-      transition: background 150ms var(--ease-snap), border-color 150ms var(--ease-snap), color 150ms var(--ease-snap), opacity 150ms var(--ease-snap);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 2px;
     }
 
-    .action.primary { background: var(--gradient-accent); color: var(--color-text-primary); }
-    .action.primary:hover:not(:disabled) { background: linear-gradient(90deg, var(--color-accent-hover), #ffbf67); }
-    .action.stop { background: var(--color-danger); color: var(--color-text-primary); }
-    .action.stop:hover:not(:disabled) { background: #f05252; }
-    .action.processing { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-secondary); cursor: not-allowed; }
-    .action.done { background: var(--gradient-accent); color: var(--color-text-primary); }
-    .action.done:hover:not(:disabled) { background: linear-gradient(90deg, var(--color-accent-hover), #ffbf67); }
-    .action.secondary {
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-text-secondary);
-      margin-top: 6px;
-    }
-    .action.secondary:hover:not(:disabled) { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
-
-    .action:disabled { opacity: 0.75; cursor: not-allowed; }
-
-    .spinner {
-      width: 14px;
-      height: 14px;
-      border: 2px solid var(--color-accent);
-      border-top-color: transparent;
-      border-radius: 999px;
-      animation: spin 0.8s linear infinite;
+    .auth-status {
+      min-height: 18px;
+      font-size: 12px;
+      color: var(--muted);
     }
 
-    .footer {
-      margin-top: 2px;
-      text-align: center;
-      font-size: 10px;
-      line-height: 1.35;
-      color: var(--color-text-tertiary);
-      letter-spacing: 0.03em;
+    .dot.uploading,
+    .dot.pulsing,
+    .dot.done,
+    .dot.recording {
+      background: var(--accent);
     }
 
-    @keyframes dotPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(0.82); opacity: 0.72; }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 0.55;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .dot.pulsing {
+      animation: pulse 1.2s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
-  <main class="popup">
-    <div id="authScreen" hidden>
-      <div class="auth-card">
-        <img src="logo-dark.png" alt="Minutz" class="auth-logo" width="76" height="auto" />
-        <h1 class="auth-title">Sign in to use Minutz</h1>
-        <p class="auth-copy">Create a free account to start recording meetings invisibly.</p>
-        <button id="authLoginBtn" class="auth-button primary" type="button">Sign In / Sign Up</button>
-        <p class="auth-note">After signing in, come back and click below</p>
-        <button id="authConfirmBtn" class="auth-button secondary" type="button">I've signed in &#10003;</button>
-        <p id="authStatus" class="auth-status" aria-live="polite"></p>
+  <div id="authScreen" hidden>
+    <div class="auth-card">
+      <div class="auth-eyebrow">Minutz</div>
+      <h1 class="auth-title">Sign in to keep your meetings flowing.</h1>
+      <div class="auth-copy">
+        Connect your workspace to start recording, reviewing history, and syncing summaries automatically.
       </div>
+      <div class="auth-actions">
+        <button id="authLoginBtn" type="button" class="auth-action">Sign in</button>
+        <button id="authConfirmBtn" type="button" class="auth-action">I&apos;ve signed in</button>
+      </div>
+      <div id="authStatus" class="auth-status"></div>
+    </div>
+  </div>
+
+  <div id="mainUi">
+    <header class="header">
+      <div class="brand">
+        <img src="icon-orange.png" width="22" height="22" alt="Minutz" />
+        <div class="brand-text">Minutz</div>
+      </div>
+
+      <div class="header-actions">
+        <button id="historyBtn" type="button" aria-label="Open history">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M21 12a9 9 0 1 1-9-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
+        <div id="statusDot" aria-hidden="true"></div>
+        <div id="statusDotLabel">idle</div>
+      </div>
+    </header>
+
+    <div id="meetingBadge" class="pill idle" hidden></div>
+
+    <div id="detectionBanner">
+      <div id="detectionDot" aria-hidden="true"></div>
+      <div id="detectionText">Open a meeting to start</div>
     </div>
 
-    <div id="mainUi">
-      <header class="header">
-        <div class="brand" aria-label="Minutz">
-          <img class="brand-logo" src="logo-light.png" alt="Minutz logo" />
-        </div>
-        <div class="header-controls">
-          <div class="status-stack">
-            <div class="status-head">
-              <span id="statusDot" class="dot"></span>
-              <button id="historyBtn" class="history-btn" type="button" aria-label="Open meeting history" title="Recent meetings">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M3 12a9 9 0 1 0 3-6.7" />
-                  <path d="M3 3v4h4" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-              </button>
-            </div>
-            <span id="statusDotLabel">idle</span>
-          </div>
-        </div>
-      </header>
+    <input
+      id="meetingTitleInput"
+      type="text"
+      placeholder="Meeting title (e.g., Product Weekly Sync)"
+      autocomplete="off"
+      spellcheck="false"
+    />
 
-    <div id="meetingBadge" class="pill idle">Open a meeting to start</div>
-    <input id="meetingTitleInput" class="title-input" type="text" maxlength="120" placeholder="Meeting title (e.g., Product Weekly Sync)" />
-
-    <section id="statusCard" class="card">
-      <p id="statusText">Ready to record</p>
-      <p id="statusSubtext" style="font-size:11px; color:#6B6B6B; margin-top:4px;"></p>
+    <section id="statusCard" aria-live="polite">
+      <div id="statusText">Ready to record</div>
+      <div id="statusSubtext"></div>
+      <div id="timerText">0:00</div>
+      <div id="spinner" aria-hidden="true"></div>
     </section>
 
-    <button id="primaryBtn" class="action primary" type="button">Start Recording</button>
-
-    <footer class="footer">Minutz - Invisible AI Meeting Intelligence</footer>
-
-      <div id="historyPanel" hidden>
-        <div class="history-topbar">
-          <button id="historyBackBtn" class="history-back" type="button">&#8592; Back</button>
-          <div class="history-title">Recent Meetings</div>
-        </div>
-        <div id="historyList" class="history-list" aria-live="polite"></div>
-      </div>
+    <div id="actionBtn" class="action-wrap">
+      <button id="primaryBtn" type="button" class="action primary">Start Recording</button>
     </div>
-  </main>
 
-  <script src="popup.js"></script>
+    <div class="footer">Minutz &mdash; Invisible AI Meeting Intelligence</div>
+  </div>
+
+  <div id="historyPanel" hidden>
+    <div class="panel-header">
+      <div class="brand">
+        <img src="icon-orange.png" width="22" height="22" alt="Minutz" />
+        <div class="brand-text">History</div>
+      </div>
+      <button id="historyBackBtn" type="button" class="back-btn" aria-label="Back to popup" onclick="document.getElementById('historyPanel').hidden = true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Back
+      </button>
+    </div>
+
+    <div class="history-shell">
+      <div class="history-heading">
+        <h2 class="history-title">Recent meetings</h2>
+        <div class="history-subtitle">Open a meeting to inspect its summary page.</div>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
 </body>
 </html>
