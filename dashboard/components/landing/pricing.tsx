@@ -79,14 +79,14 @@ export function Pricing() {
               transition={{ duration: 0.5, delay: i * 0.08, ease }}
               className={`relative flex flex-col overflow-hidden rounded-xl p-7 ${
                 plan.popular
-                  ? "border-2 border-[#FF6A00] bg-[var(--color-surface-raised)]"
+                  ? "border-2 border-[#FF6A00] bg-[var(--color-surface-raised)] pt-10"
                   : "border border-[var(--color-border)] bg-[var(--color-surface-raised)]"
               }`}
             >
               {plan.popular && (
                 <>
                   <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-[#FF6A00] to-[#FFB347]" />
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <div className="absolute left-1/2 top-3 -translate-x-1/2">
                     <span className="rounded-full bg-[#FF6A00] px-3 py-1 text-xs font-semibold text-white">Popular</span>
                   </div>
                   <BorderBeam colorFrom="#FF6A00" colorTo="#FFB347" size={120} duration={10} />

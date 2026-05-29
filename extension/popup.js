@@ -442,10 +442,8 @@ async function detectMeetingTab() {
 }
 
 async function hydrateState() {
-  const authState = await chrome.storage.local.get(["minutz_user"]);
-  const storedUser = authState?.minutz_user;
-
-  if (!storedUser?.email || !(storedUser?.token || storedUser?.id)) {
+  const user = await checkAuth();
+  if (!user) {
     showAuthScreen();
     return;
   }
@@ -705,6 +703,14 @@ async function onPrimaryClick() {
       pipelineStage = null;
       setStatusCard(message.detail || "Something went wrong", "", "idle");
       setUiState({ status: "idle", startedAt: null }).catch(() => {});
+    }
+  });
+
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && 'minutz_user' in changes) {
+      if (!changes.minutz_user.newValue) {
+        showAuthScreen();
+      }
     }
   });
 

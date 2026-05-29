@@ -1,68 +1,79 @@
 {
-    "name":  "Minutz",
-    "version":  "1.0",
-    "manifest_version":  3,
-    "permissions":  [
-                        "activeTab",
-                        "tabs",
-                        "storage",
-                        "scripting",
-                        "tabCapture",
-                        "offscreen",
-                        "notifications"
-                    ],
-    "host_permissions":  [
-                             "*://*.zoom.us/*",
-                             "*://meet.google.com/*",
-                             "*://*.teams.microsoft.com/*",
-                             "http://localhost:3000/*",
-                             "http://localhost:8001/*",
-                             "http://localhost:3001/*"
-                         ],
-    "background":  {
-                       "service_worker":  "background.js"
-                   },
-    "action":  {
-                   "default_popup":  "popup.html",
-                   "default_icon":  {
-                                        "16":  "icon16.png",
-                                        "128":  "icon128.png",
-                                        "48":  "icon48.png",
-                                        "32":  "icon32.png"
-                                    }
-               },
-    "content_scripts":  [
-                            {
-                                "matches":  [
-                                                "*://*.zoom.us/*",
-                                                "*://meet.google.com/*",
-                                                "*://*.teams.microsoft.com/*",
-                                                "http://localhost:3000/*"
-                                            ],
-                                "js":  [
-                                           "content.js"
-                                       ]
-                            }
-                        ],
-    "web_accessible_resources":  [
-                                     {
-                                         "resources":  [
-                                                            "icon-orange.png",
-                                                            "logo-dark.png",
-                                                            "popup.html",
-                                                            "popup.js",
-                                                            "content.js",
-                                                            "background.js"
-                                                        ],
-                                         "matches":  [
-                                                          "<all_urls>"
-                                                      ]
-                                     }
-                                 ],
-    "icons":  {
-                  "16":  "icon16.png",
-                  "128":  "icon128.png",
-                  "48":  "icon48.png",
-                  "32":  "icon32.png"
-              }
+    "name": "Minutz",
+    "version": "1.0",
+    "manifest_version": 3,
+    "permissions": [
+        "activeTab",
+        "tabs",
+        "storage",
+        "scripting",
+        "tabCapture",
+        "offscreen",
+        "notifications"
+    ],
+    "host_permissions": [
+        "*://*.zoom.us/*",
+        "*://meet.google.com/*",
+        "*://*.teams.microsoft.com/*",
+        "http://localhost:3000/*",
+        "http://localhost:8001/*",
+        "http://localhost:3001/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icon16.png",
+            "32": "icon32.png",
+            "48": "icon48.png",
+            "128": "icon128.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.zoom.us/*",
+                "*://meet.google.com/*",
+                "*://*.teams.microsoft.com/*"
+            ],
+            "js": ["content.js"]
+        },
+        {
+            "matches": [
+                "http://localhost:3000/*",
+                "http://localhost:3001/*"
+            ],
+            "js": ["auth-relay.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "icon-orange.png",
+                "icon16.png",
+                "icon32.png",
+                "icon48.png",
+                "icon128.png",
+                "logo-dark.png",
+                "logo-light.png",
+                "offscreen.html",
+                "offscreen.js",
+                "popup.html",
+                "popup.js",
+                "content.js",
+                "auth-relay.js",
+                "background.js"
+            ],
+            "matches": ["<all_urls>"]
+        }
+    ],
+    "icons": {
+        "16": "icon16.png",
+        "32": "icon32.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
+    }
 }

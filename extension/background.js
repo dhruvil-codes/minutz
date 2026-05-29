@@ -5,7 +5,15 @@ const BG_RUNTIME_VERSION = "minutz-bg-offscreen-v3";
 
 console.log(BG_RUNTIME_VERSION);
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg?.type === "MINUTZ_AUTH" && msg.user) {
+    chrome.storage.local.set({ minutz_user: msg.user });
+    console.log('[Minutz BG] User auth relayed:', msg.user.email);
+  }
+  if (msg?.type === "MINUTZ_SIGNOUT") {
+    chrome.storage.local.remove(['minutz_user']);
+    console.log('[Minutz BG] Signed out, auth cache cleared');
+  }
   if (msg?.type === "SET_USER") {
     chrome.storage.local.set({ minutz_user: msg.user });
   }

@@ -87,6 +87,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     router.push("/login");
   }
 
