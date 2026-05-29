@@ -572,17 +572,43 @@ async function onPrimaryClick() {
     });
   }
 
+  async function checkAuth() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(["minutz_user"], async (result) => {
+        if (result.minutz_user) {
+          resolve(result.minutz_user);
+          return;
+        }
+        try {
+          const response = await fetch("http://localhost:3000/api/auth/check", {
+            credentials: "include"
+          });
+          const data = await response.json();
+          if (data.authenticated && data.user) {
+            chrome.storage.local.set({ minutz_user: data.user });
+            resolve(data.user);
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+  }
+
   if (iveSignedInBtn) {
     iveSignedInBtn.addEventListener("click", () => {
       console.log("[Minutz Popup] Button clicked:", "iveSignedInBtn");
-      chrome.storage.local.get(["minutz_user"], (result) => {
-        if (result?.minutz_user) {
+      chrome.storage.local.remove(["minutz_user"], async () => {
+        const user = await checkAuth();
+        if (user) {
           showMainUI();
           hydrateState().catch((error) => {
             showError(error?.message || "Failed to load extension");
           });
         } else {
-          showError("Sign in not detected yet. Please return to the dashboard and wait a moment.");
+          showError("Not signed in yet. Make sure you are logged in at localhost:3000 then try again.");
         }
       });
     });
