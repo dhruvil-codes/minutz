@@ -133,11 +133,20 @@ async function waitForStoredUser(maxAttempts = 20, delayMs = 250) {
 }
 
 function showHistoryPanel() {
-  if (historyPanel) historyPanel.hidden = false;
+  if (!historyPanel) return;
+  historyPanel.hidden = false;
+  historyPanel.offsetHeight;
+  historyPanel.classList.add("is-open");
 }
 
 function hideHistoryPanel() {
-  if (historyPanel) historyPanel.hidden = true;
+  if (!historyPanel) return;
+  historyPanel.classList.remove("is-open");
+  window.setTimeout(() => {
+    if (historyPanel && !historyPanel.classList.contains("is-open")) {
+      historyPanel.hidden = true;
+    }
+  }, 180);
 }
 
 function setStatusVisual(stage) {
