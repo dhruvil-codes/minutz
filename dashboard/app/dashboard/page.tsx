@@ -252,7 +252,9 @@ export default function DashboardPage() {
 
     const latest = meetings[0];
     const latestText = latest
-      ? `${latest.title || "Untitled"} · ${new Date(latest.created_at).toLocaleDateString()}`
+      ? `${latest.title || "Untitled"}${String.fromCharCode(32)}${String.fromCharCode(183)}${String.fromCharCode(32)}${new Date(
+          latest.created_at
+        ).toLocaleDateString()}`
       : "No meetings yet";
     const statusCounts = {
       completed: meetings.filter((m) => m.status === "completed").length,
@@ -304,8 +306,8 @@ export default function DashboardPage() {
 
   const chart = useMemo(() => {
     const width = 760;
-    const top = 42;
-    const bottom = 190;
+    const top = 18;
+    const bottom = 140;
     const left = 34;
     const right = 34;
     const usableWidth = width - left - right;
@@ -400,115 +402,115 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <Card className={`${surface} min-h-[520px] py-0 xl:col-span-2`}>
+            <Card className={`${surface} py-0 xl:col-span-2`}>
               <CardHeader className="flex flex-row items-center justify-between px-5 pb-3 pt-4">
                 <div>
                   <CardTitle className="text-sm font-semibold text-white">Meetings last 7 days</CardTitle>
                   <p className="mt-1 text-xs text-[#6B6B6B]">Captured sessions by day</p>
                 </div>
-                <Badge variant="outline" className="border-white/10 bg-white/5 text-[#A3A3A3]">Trend</Badge>
               </CardHeader>
-              <CardContent className="flex min-h-[444px] flex-1 flex-col px-5 pb-5">
+              <CardContent className="px-5 pb-0">
                 <Card className={`${subtleSurface} overflow-hidden py-0`}>
                   <CardContent className="p-0">
-                    <svg
-                      className="block h-[235px] w-full"
-                      viewBox="0 0 760 240"
-                      role="img"
-                      aria-label="Line graph showing meetings captured over the last seven days"
-                      preserveAspectRatio="none"
-                    >
-                      <defs>
-                        <linearGradient id="minutzTrendArea" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="#FF6A00" stopOpacity="0.46" />
-                          <stop offset="55%" stopColor="#FF9B2F" stopOpacity="0.18" />
-                          <stop offset="100%" stopColor="#FF6A00" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="minutzTrendLine" x1="0" x2="1" y1="0" y2="0">
-                          <stop offset="0%" stopColor="#FF6A00" />
-                          <stop offset="55%" stopColor="#FFB347" />
-                          <stop offset="100%" stopColor="#FF6A00" />
-                        </linearGradient>
-                        <filter id="minutzTrendGlow" x="-20%" y="-60%" width="140%" height="220%">
-                          <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-                          <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                          </feMerge>
-                        </filter>
-                      </defs>
+                    <div className="w-full" style={{ height: 180 }}>
+                      <svg
+                        className="block h-[180px] w-full"
+                        viewBox="0 0 760 180"
+                        role="img"
+                        aria-label="Line graph showing meetings captured over the last seven days"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="minutzTrendArea" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#FF6A00" stopOpacity="0.46" />
+                            <stop offset="55%" stopColor="#FF9B2F" stopOpacity="0.18" />
+                            <stop offset="100%" stopColor="#FF6A00" stopOpacity="0" />
+                          </linearGradient>
+                          <linearGradient id="minutzTrendLine" x1="0" x2="1" y1="0" y2="0">
+                            <stop offset="0%" stopColor="#FF6A00" />
+                            <stop offset="55%" stopColor="#FFB347" />
+                            <stop offset="100%" stopColor="#FF6A00" />
+                          </linearGradient>
+                          <filter id="minutzTrendGlow" x="-20%" y="-60%" width="140%" height="220%">
+                            <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                            <feMerge>
+                              <feMergeNode in="coloredBlur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
 
-                      {chart.gridLines.map((lineY) => (
-                        <line
-                          key={lineY}
-                          x1="34"
-                          x2="726"
-                          y1={lineY}
-                          y2={lineY}
-                          stroke="#2A2A2A"
-                          strokeWidth="1"
+                        {chart.gridLines.map((lineY) => (
+                          <line
+                            key={lineY}
+                            x1="34"
+                            x2="726"
+                            y1={lineY}
+                            y2={lineY}
+                            stroke="#2A2A2A"
+                            strokeWidth="1"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        ))}
+
+                        <path d={chart.areaPath} fill="url(#minutzTrendArea)" />
+                        <path
+                          d={chart.linePath}
+                          fill="none"
+                          stroke="#31180b"
+                          strokeWidth="10"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          opacity="0.7"
                           vectorEffect="non-scaling-stroke"
                         />
-                      ))}
+                        <path
+                          d={chart.linePath}
+                          fill="none"
+                          stroke="url(#minutzTrendLine)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          filter="url(#minutzTrendGlow)"
+                          vectorEffect="non-scaling-stroke"
+                        />
 
-                      <path d={chart.areaPath} fill="url(#minutzTrendArea)" />
-                      <path
-                        d={chart.linePath}
-                        fill="none"
-                        stroke="#31180b"
-                        strokeWidth="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        opacity="0.7"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <path
-                        d={chart.linePath}
-                        fill="none"
-                        stroke="url(#minutzTrendLine)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        filter="url(#minutzTrendGlow)"
-                        vectorEffect="non-scaling-stroke"
-                      />
-
-                      {chart.points.map((point) => (
-                        <g key={point.label}>
-                          <line
-                            x1={point.x}
-                            x2={point.x}
-                            y1={point.y}
-                            y2="200"
-                            stroke={point.count > 0 ? "#3B2513" : "#2A2A2A"}
-                            strokeWidth="1"
-                            strokeDasharray={point.count > 0 ? "0" : "3 4"}
-                            opacity="0.8"
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="5"
-                            fill={point.count > 0 ? "#FF6A00" : "#2A2A2A"}
-                            stroke={point.count > 0 ? "#FFB347" : "#3A3A3A"}
-                            strokeWidth="2"
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          <text
-                            x={point.x}
-                            y="224"
-                            textAnchor="middle"
-                            className="fill-[#6B6B6B] text-[10px] font-medium"
-                          >
-                            {point.label}
-                          </text>
-                        </g>
-                      ))}
-                    </svg>
+                        {chart.points.map((point) => (
+                          <g key={point.label}>
+                            <line
+                              x1={point.x}
+                              x2={point.x}
+                              y1={point.y}
+                              y2="140"
+                              stroke={point.count > 0 ? "#3B2513" : "#2A2A2A"}
+                              strokeWidth="1"
+                              strokeDasharray={point.count > 0 ? "0" : "3 4"}
+                              opacity="0.8"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="5"
+                              fill={point.count > 0 ? "#FF6A00" : "#2A2A2A"}
+                              stroke={point.count > 0 ? "#FFB347" : "#3A3A3A"}
+                              strokeWidth="2"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                            <text
+                              x={point.x}
+                              y="170"
+                              textAnchor="middle"
+                              className="fill-[#6B6B6B] text-[10px] font-medium"
+                            >
+                              {point.label}
+                            </text>
+                          </g>
+                        ))}
+                      </svg>
+                    </div>
                   </CardContent>
                 </Card>
-                <div className="min-h-[170px]" />
               </CardContent>
             </Card>
 
@@ -523,15 +525,15 @@ export default function DashboardPage() {
                     { label: "Top niche", value: derived.topNiche, icon: Sparkles },
                     { label: "Completion rate", value: `${derived.completionRate}%`, icon: TrendingUp },
                   ].map((item) => (
-                    <div key={item.label} className="flex items-start gap-3 rounded-xl border border-[#2A2A2A] bg-[#111111] p-4">
-                      <Badge variant="outline" className="size-8 rounded-lg border-[#FF6A00]/20 bg-[#FF6A00]/10 p-0 text-[#FF6A00]">
-                        <item.icon className="size-4" />
-                      </Badge>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-[#6B6B6B]">{item.label}</p>
-                        <p className="mt-0.5 text-xs text-[#A3A3A3]">{item.value}</p>
+                      <div key={item.label} className="flex items-start gap-3 rounded-xl border border-[#2A2A2A] bg-[#111111] p-4">
+                        <Badge variant="outline" className="size-8 rounded-lg border-[#FF6A00]/20 bg-[#FF6A00]/10 p-0 text-[#FF6A00]">
+                          <item.icon className="size-4" />
+                        </Badge>
+                        <div>
+                          <p className="text-xs text-muted-foreground">{item.label}</p>
+                          <p className="mt-0.5 text-xs text-[#A3A3A3]">{item.value}</p>
+                        </div>
                       </div>
-                    </div>
                   ))}
                 </CardContent>
               </Card>
@@ -551,7 +553,11 @@ export default function DashboardPage() {
                       <div key={item.key} className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[#A3A3A3]">{item.key}</span>
-                  <span className="font-semibold text-white">{item.count} Ã‚Â· {percent}%</span>
+                          <span className="font-semibold text-white">
+                            <span>{item.count}</span>
+                            <span className="text-[#6B6B6B]">{" \u00b7 "}</span>
+                            <span>{percent}%</span>
+                          </span>
                         </div>
                         <Progress value={percent} className="bg-[#2A2A2A]" indicatorClassName={item.className} />
                       </div>
@@ -572,7 +578,11 @@ export default function DashboardPage() {
                   <div key={item.niche} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Badge variant="outline" className={nicheVariant(item.niche)}>{item.niche}</Badge>
-                  <span className="text-xs font-semibold text-white">{item.count} Ã‚Â· {item.percent}%</span>
+                      <span className="text-xs font-semibold text-white">
+                        <span>{item.count}</span>
+                        <span className="text-[#6B6B6B]">{" \u00b7 "}</span>
+                        <span>{item.percent}%</span>
+                      </span>
                     </div>
                     <Progress value={item.percent} className="bg-[#2A2A2A]" indicatorClassName="bg-gradient-to-r from-[#FF6A00] to-[#FFB347]" />
                   </div>
