@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import Image from "next/image";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
-import HeroBadge from "@/components/ui/hero-badge";
+import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import {
     Navbar, NavBody, NavItems, NavbarLogo, NavbarButton,
@@ -318,12 +318,11 @@ const InteractiveHero: React.FC = () => {
             {/* Hero content */}
             <main className="flex-grow flex flex-col items-center justify-center text-center px-4 pt-32 pb-16 relative z-10">
                 <motion.div variants={bannerV} initial="hidden" animate="visible" className="mb-6">
-                    <HeroBadge
-                        text="⚡ Now in beta — invisible AI meeting intelligence"
-                        variant="outline"
-                        size="md"
-                        className="border-[var(--color-border)] bg-[var(--color-surface)] text-[#FF6A00] hover:border-[#FF6A00]/50"
-                    />
+                    <div className="inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-sm font-medium text-[var(--color-text-secondary)]">
+                        <AnimatedShinyText className="text-[var(--color-text-secondary)]" shimmerWidth={90}>
+                            ⚡ Now in beta — invisible AI meeting intelligence
+                        </AnimatedShinyText>
+                    </div>
                 </motion.div>
 
                 <motion.h1 variants={headlineV} initial="hidden" animate="visible" className="mb-4 max-w-4xl text-4xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-5xl lg:text-[64px]">
