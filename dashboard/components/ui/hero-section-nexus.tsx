@@ -9,8 +9,9 @@ import Image from "next/image";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import {
-    Navbar, NavBody, NavItems, NavbarLogo, NavbarButton,
+    Navbar, NavBody, NavItems, NavbarLogo,
     MobileNav, MobileNavHeader, MobileNavToggle, MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
 import {
@@ -287,8 +288,14 @@ const InteractiveHero: React.FC = () => {
                                 className="relative z-[80] inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:border-[#FF6A00]/50 hover:text-[var(--color-text-primary)]"
                                 aria-label="Toggle theme"
                             />
-                            <NavbarButton href="/login" variant="secondary">Sign in</NavbarButton>
-                            <NavbarButton href="/login" variant="dark">Get started free</NavbarButton>
+                            <ShimmerButton
+                                href="/login"
+                                borderRadius="9999px"
+                                background="var(--color-surface)"
+                                className="px-4 py-1.5 text-sm font-medium"
+                            >
+                                Login
+                            </ShimmerButton>
                         </div>
                     </NavBody>
                     <MobileNav>
@@ -307,8 +314,14 @@ const InteractiveHero: React.FC = () => {
                                     className="relative z-[80] inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:border-[#FF6A00]/50 hover:text-[var(--color-text-primary)]"
                                     aria-label="Toggle theme"
                                 />
-                                <NavbarButton href="/login" variant="secondary" className="w-full text-center">Sign in</NavbarButton>
-                                <NavbarButton href="/login" variant="dark" className="w-full text-center">Get started free</NavbarButton>
+                                <ShimmerButton
+                                    href="/login"
+                                    borderRadius="9999px"
+                                    background="var(--color-surface)"
+                                    className="w-full px-4 py-1.5 text-center text-sm font-medium"
+                                >
+                                    Login
+                                </ShimmerButton>
                             </div>
                         </MobileNavMenu>
                     </MobileNav>
@@ -349,9 +362,19 @@ const InteractiveHero: React.FC = () => {
                     Record invisibly. Get executive summaries, action items, and decisions in 60 seconds. Auto-synced to Slack, Notion, and HubSpot.
                 </motion.p>
 
-                <motion.div variants={ctaV} initial="hidden" animate="visible" className="mb-3 flex justify-center gap-3">
-                    <a href="/login" className="rounded-md bg-[#FF6A00] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">Start for free</a>
-                    <a href="#demo" className="rounded-md border border-[var(--color-border)] px-6 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]">Watch demo</a>
+                <motion.div variants={ctaV} initial="hidden" animate="visible" className="mt-8 flex items-center justify-center gap-3">
+                    <ShimmerButton
+                        href="https://github.com/dhruvil-codes/minutz"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        shimmerColor="#FF6A00"
+                        borderRadius="8px"
+                        background="#111111"
+                        className="px-6 py-3"
+                    >
+                        Install Chrome Extension
+                    </ShimmerButton>
+                    <a href="/login" className="rounded-md bg-[#FF6A00] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">Sign Up</a>
                 </motion.div>
 
                 <motion.p variants={trialV} initial="hidden" animate="visible" className="mb-10 text-xs text-[var(--color-text-secondary)]">

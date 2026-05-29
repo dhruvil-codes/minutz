@@ -16,6 +16,7 @@ const authScreen = document.getElementById("authScreen");
 const mainUi = document.getElementById("mainUi");
 const authLoginBtn = document.getElementById("authLoginBtn");
 const authConfirmBtn = document.getElementById("authConfirmBtn");
+const authStatus = document.getElementById("authStatus");
 
 if (mainUi) mainUi.hidden = true;
 
@@ -116,6 +117,19 @@ function showAuthScreen() {
   stopTimer();
   if (mainUi) mainUi.hidden = true;
   if (authScreen) authScreen.hidden = false;
+  if (authStatus) authStatus.textContent = "";
+}
+
+async function waitForStoredUser(maxAttempts = 20, delayMs = 250) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const authState = await chrome.storage.local.get(["minutz_user"]);
+    const storedUser = authState?.minutz_user;
+    if (storedUser?.email && storedUser?.token) {
+      return storedUser;
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return null;
 }
 
 function showHistoryPanel() {
@@ -491,11 +505,27 @@ if (authLoginBtn) {
 
 if (authConfirmBtn) {
   authConfirmBtn.addEventListener("click", () => {
-    hydrateState().catch((error) => {
-      if (authScreen) authScreen.hidden = false;
-      if (mainUi) mainUi.hidden = true;
-      setStatusCard(error?.message || "Failed to verify sign-in", "", "idle");
-    });
+    const originalLabel = authConfirmBtn.textContent;
+    authConfirmBtn.disabled = true;
+    authConfirmBtn.textContent = "Checking...";
+    if (authStatus) authStatus.textContent = "";
+
+    waitForStoredUser()
+      .then((storedUser) => {
+        if (!storedUser) {
+          throw new Error("Sign-in not detected yet. Please return to the dashboard and wait a moment.");
+        }
+        return hydrateState();
+      })
+      .catch((error) => {
+        if (authScreen) authScreen.hidden = false;
+        if (mainUi) mainUi.hidden = true;
+        if (authStatus) authStatus.textContent = error?.message || "Failed to verify sign-in";
+      })
+      .finally(() => {
+        authConfirmBtn.disabled = false;
+        authConfirmBtn.textContent = originalLabel || "I've signed in ✓";
+      });
   });
 }
 

@@ -65,9 +65,9 @@
 
     .auth-logo {
       display: block;
-      width: 40px;
-      height: 40px;
-      margin: 0 auto 12px;
+      width: 76px;
+      height: auto;
+      margin: 0 auto 14px;
     }
 
     .auth-title {
@@ -121,6 +121,14 @@
       font-size: 10px;
       line-height: 1.4;
       color: var(--color-text-tertiary);
+    }
+
+    .auth-status {
+      min-height: 16px;
+      margin: 10px 0 0;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--color-text-secondary);
     }
 
     .header {
@@ -468,12 +476,13 @@
   <main class="popup">
     <div id="authScreen" hidden>
       <div class="auth-card">
-        <img src="icon-orange.png" alt="Minutz" class="auth-logo" width="40" height="40" />
+        <img src="logo-dark.png" alt="Minutz" class="auth-logo" width="76" height="auto" />
         <h1 class="auth-title">Sign in to use Minutz</h1>
         <p class="auth-copy">Create a free account to start recording meetings invisibly.</p>
         <button id="authLoginBtn" class="auth-button primary" type="button">Sign In / Sign Up</button>
         <p class="auth-note">After signing in, come back and click below</p>
         <button id="authConfirmBtn" class="auth-button secondary" type="button">I've signed in &#10003;</button>
+        <p id="authStatus" class="auth-status" aria-live="polite"></p>
       </div>
     </div>
 

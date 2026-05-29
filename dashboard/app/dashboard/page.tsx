@@ -152,6 +152,7 @@ export default function DashboardPage() {
   const [error, setError] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const extensionSyncRef = useRef(false);
+  const extensionSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchMeetings = useCallback(async () => {
     try {
@@ -190,9 +191,6 @@ export default function DashboardPage() {
   }, [fetchMeetings]);
 
   useEffect(() => {
-    if (extensionSyncRef.current) return;
-    extensionSyncRef.current = true;
-
     const syncExtensionUser = async () => {
       const supabase = createClient();
       const [{ data: userData }, { data: sessionData }] = await Promise.all([
@@ -207,6 +205,8 @@ export default function DashboardPage() {
 
       const payload = { email: user.email, token };
 
+      extensionSyncRef.current = true;
+
       if (typeof window !== "undefined" && (window as any).chrome?.runtime) {
         (window as any).chrome.runtime.sendMessage({ type: "SET_USER", user: payload }, () => {
           void (window as any).chrome.runtime.lastError;
@@ -216,7 +216,34 @@ export default function DashboardPage() {
       window.dispatchEvent(new CustomEvent("minutz:set-user", { detail: payload }));
     };
 
+    const stopRetrying = () => {
+      if (extensionSyncIntervalRef.current) {
+        clearInterval(extensionSyncIntervalRef.current);
+        extensionSyncIntervalRef.current = null;
+      }
+    };
+
     syncExtensionUser().catch(() => {});
+    extensionSyncIntervalRef.current = setInterval(() => {
+      if (!extensionSyncRef.current) {
+        syncExtensionUser().catch(() => {});
+      } else {
+        stopRetrying();
+      }
+    }, 2000);
+
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      extensionSyncRef.current = false;
+      syncExtensionUser().catch(() => {});
+    });
+
+    return () => {
+      stopRetrying();
+      subscription.unsubscribe();
+    };
   }, []);
 
   const derived = useMemo(() => {

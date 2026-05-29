@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
 
@@ -246,11 +247,24 @@ function useMediaQuery(query: string) {
 
 export function Footer() {
   const tablet = useMediaQuery("(max-width: 1024px)");
+  const { resolvedTheme } = useTheme();
+  const isLight = (resolvedTheme ?? "dark") === "light";
   const gridText = useMemo(() => (tablet ? "Minutz" : "Make meetings useful"), [tablet]);
 
   return (
-    <footer id="footer" className="relative overflow-hidden bg-background pb-0 text-[var(--color-text-primary)]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 md:flex-row md:items-start md:justify-between">
+    <footer id="footer" className="relative overflow-hidden bg-[#030100] pb-0 text-[var(--color-text-primary)]">
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[320px]"
+        aria-hidden="true"
+        style={{
+          background:
+            isLight
+              ? "radial-gradient(ellipse at 50% 100%, rgba(255, 106, 0, 0.3) 0%, rgba(255, 106, 0, 0.14) 24%, transparent 62%), linear-gradient(to top, #030100 0%, rgba(3, 1, 0, 0.94) 26%, transparent 100%)"
+              : "radial-gradient(ellipse at 50% 100%, rgba(255, 106, 0, 0.2) 0%, rgba(255, 106, 0, 0.08) 24%, transparent 62%), linear-gradient(to top, #030100 0%, rgba(3, 1, 0, 0.94) 26%, transparent 100%)",
+        }}
+      />
+
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 md:flex-row md:items-start md:justify-between">
         <div className="flex max-w-sm flex-col items-start gap-5">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo-light.png" alt="Minutz" width={104} height={26} className="block h-auto dark:hidden" />
@@ -263,13 +277,13 @@ export function Footer() {
             {trustBadges.map((badge) => (
               <span
                 key={badge}
-                className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]"
+                className="rounded-full border border-[#FF6A00]/20 bg-[#FF6A00]/8 px-3 py-1 text-xs font-medium text-white"
               >
                 {badge}
               </span>
             ))}
           </div>
-          <p className="text-xs text-[var(--color-text-secondary)]">
+          <p className="text-xs text-white">
             © 2026 Minutz. Built by{' '}
             <a href="https://x.com/bydhruvil" target="_blank" rel="noopener noreferrer">
               @bydhruvil
@@ -281,14 +295,14 @@ export function Footer() {
         <div className="grid flex-1 grid-cols-2 gap-8 md:max-w-2xl md:grid-cols-4">
           {footerLinks.map((column) => (
             <ul key={column.title} className="flex flex-col gap-2">
-              <li className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">{column.title}</li>
+              <li className="mb-2 text-sm font-semibold text-white">{column.title}</li>
               {column.links.map((link) => (
                 <li
                   key={link.id}
-                  className="group inline-flex w-fit cursor-pointer items-center justify-start gap-1 text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+                  className="group inline-flex w-fit cursor-pointer items-center justify-start gap-1 text-sm text-white transition-colors hover:text-white"
                 >
                   <Link href={link.url}>{link.title}</Link>
-                  <span className="flex size-4 translate-x-0 items-center justify-center rounded border border-[var(--color-border)] text-[#FF6A00] opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                  <span className="flex size-4 translate-x-0 items-center justify-center rounded border border-[#FF6A00]/25 text-[#FF6A00] opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
                     <ChevronRight className="h-3 w-3" />
                   </span>
                 </li>
@@ -299,8 +313,8 @@ export function Footer() {
       </div>
 
       <div className="relative z-0 mt-12 h-48 w-full md:h-64">
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-40% to-background" />
-        <div className="absolute inset-0 mx-6">
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-20% to-[#030100]" />
+        <div className="absolute inset-x-0 bottom-0 mx-6">
           <FlickeringGrid
             text={gridText}
             fontSize={tablet ? 72 : 104}
@@ -308,7 +322,7 @@ export function Footer() {
             squareSize={2}
             gridGap={tablet ? 2 : 3}
             color="255, 106, 0"
-            maxOpacity={0.3}
+            maxOpacity={isLight ? 0.52 : 0.42}
             flickerChance={0.1}
           />
         </div>
