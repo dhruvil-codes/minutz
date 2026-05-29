@@ -8,6 +8,7 @@ import React, {
 import Image from "next/image";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import HeroBadge from "@/components/ui/hero-badge";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import {
     Navbar, NavBody, NavItems, NavbarLogo, NavbarButton,
     MobileNav, MobileNavHeader, MobileNavToggle, MobileNavMenu,
@@ -142,7 +143,7 @@ const CloseIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
 interface NavLinkProps { href?: string; children: ReactNode; className?: string; onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void; }
 
 const NavLink: React.FC<NavLinkProps> = ({ href = "#", children, className = "", onClick }) => (
-    <motion.a href={href} onClick={onClick} className={cn("relative group text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200 flex items-center py-1", className)} whileHover="hover">
+    <motion.a href={href} onClick={onClick} className={cn("relative group flex items-center py-1 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-200 hover:text-[var(--color-text-primary)]", className)} whileHover="hover">
         {children}
         <motion.div className="absolute bottom-[-2px] left-0 right-0 h-[1px] bg-[#FF6A00]" variants={{ initial: { scaleX: 0, originX: 0.5 }, hover: { scaleX: 1, originX: 0.5 } }} initial="initial" transition={{ duration: 0.3, ease: "easeOut" }} />
     </motion.a>
@@ -271,9 +272,9 @@ const InteractiveHero: React.FC = () => {
     const imageV: Variants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.6, delay: d + inc * 6, ease: [0.16, 1, 0.3, 1] } } };
 
     return (
-        <div className="relative bg-black text-gray-300 min-h-screen flex flex-col overflow-x-hidden">
+        <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-[var(--color-text-secondary)]">
             <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none opacity-80" />
-            <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, #000000 90%), radial-gradient(ellipse at center, transparent 40%, #000000 95%)" }} />
+            <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, var(--color-bg) 90%), radial-gradient(ellipse at center, transparent 40%, var(--color-bg) 95%)" }} />
 
             {/* Navbar */}
             <div className="relative z-30 w-full">
@@ -282,6 +283,10 @@ const InteractiveHero: React.FC = () => {
                         <NavbarLogo />
                         <NavItems items={navItems} />
                         <div className="flex items-center gap-4">
+                            <AnimatedThemeToggler
+                                className="relative z-[80] inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:border-[#FF6A00]/50 hover:text-[var(--color-text-primary)]"
+                                aria-label="Toggle theme"
+                            />
                             <NavbarButton href="/login" variant="secondary">Sign in</NavbarButton>
                             <NavbarButton href="/login" variant="dark">Get started free</NavbarButton>
                         </div>
@@ -293,11 +298,15 @@ const InteractiveHero: React.FC = () => {
                         </MobileNavHeader>
                         <MobileNavMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
                             {navItems.map((item, idx) => (
-                                <a key={idx} href={item.link} onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-300 hover:text-white">
+                                <a key={idx} href={item.link} onClick={() => setIsMobileMenuOpen(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
                                     {item.name}
                                 </a>
                             ))}
                             <div className="flex w-full flex-col gap-3 pt-2">
+                                <AnimatedThemeToggler
+                                    className="relative z-[80] inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors hover:border-[#FF6A00]/50 hover:text-[var(--color-text-primary)]"
+                                    aria-label="Toggle theme"
+                                />
                                 <NavbarButton href="/login" variant="secondary" className="w-full text-center">Sign in</NavbarButton>
                                 <NavbarButton href="/login" variant="dark" className="w-full text-center">Get started free</NavbarButton>
                             </div>
@@ -313,11 +322,11 @@ const InteractiveHero: React.FC = () => {
                         text="⚡ Now in beta — invisible AI meeting intelligence"
                         variant="outline"
                         size="md"
-                        className="border-gray-700 bg-[#1a1a1a] text-[#FF6A00] hover:border-[#FF6A00]/50"
+                        className="border-[var(--color-border)] bg-[var(--color-surface)] text-[#FF6A00] hover:border-[#FF6A00]/50"
                     />
                 </motion.div>
 
-                <motion.h1 variants={headlineV} initial="hidden" animate="visible" className="text-4xl sm:text-5xl lg:text-[64px] font-semibold text-white leading-tight max-w-4xl mb-4">
+                <motion.h1 variants={headlineV} initial="hidden" animate="visible" className="mb-4 max-w-4xl text-4xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-5xl lg:text-[64px]">
                     Your meetings,{" "}
                     <span className="inline-block overflow-hidden align-bottom">
                         <RotatingText
@@ -337,26 +346,26 @@ const InteractiveHero: React.FC = () => {
                     </span>
                 </motion.h1>
 
-                <motion.p variants={subV} initial="hidden" animate="visible" className="text-base sm:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+                <motion.p variants={subV} initial="hidden" animate="visible" className="mx-auto mb-8 max-w-2xl text-base text-[var(--color-text-secondary)] sm:text-lg lg:text-xl">
                     Record invisibly. Get executive summaries, action items, and decisions in 60 seconds. Auto-synced to Slack, Notion, and HubSpot.
                 </motion.p>
 
-                <motion.div variants={ctaV} initial="hidden" animate="visible" className="flex gap-3 justify-center mb-3">
-                    <a href="/login" className="bg-[#FF6A00] hover:bg-[#E55E00] text-white px-6 py-2.5 rounded-md text-sm font-semibold transition-colors">Start for free</a>
-                    <a href="#demo" className="border border-gray-700 text-gray-300 hover:text-white px-6 py-2.5 rounded-md text-sm font-semibold transition-colors">Watch demo</a>
+                <motion.div variants={ctaV} initial="hidden" animate="visible" className="mb-3 flex justify-center gap-3">
+                    <a href="/login" className="rounded-md bg-[#FF6A00] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55E00]">Start for free</a>
+                    <a href="#demo" className="rounded-md border border-[var(--color-border)] px-6 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]">Watch demo</a>
                 </motion.div>
 
-                <motion.p variants={trialV} initial="hidden" animate="visible" className="text-xs text-gray-500 mb-10">
+                <motion.p variants={trialV} initial="hidden" animate="visible" className="mb-10 text-xs text-[var(--color-text-secondary)]">
                     No credit card required · No bot joins your call
                 </motion.p>
 
-                <motion.div variants={worksV} initial="hidden" animate="visible" className="flex flex-col items-center justify-center space-y-3 mb-10">
-                    <span className="text-xs uppercase text-gray-500 tracking-wider font-medium">Works with</span>
+                <motion.div variants={worksV} initial="hidden" animate="visible" className="mb-10 flex flex-col items-center justify-center space-y-3">
+                    <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Works with</span>
                     <AnimatedTooltip items={worksWithTools} />
                 </motion.div>
 
-                <motion.div variants={imageV} initial="hidden" animate="visible" className="w-full max-w-4xl mx-auto px-4 sm:px-0">
-                    <div className="relative w-full max-w-4xl mx-auto overflow-hidden rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] aspect-[16/9]">
+                <motion.div variants={imageV} initial="hidden" animate="visible" className="mx-auto w-full max-w-4xl px-4 sm:px-0">
+                    <div className="relative mx-auto aspect-[16/9] w-full max-w-4xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
                         <Image
                             src="/dashboard.png"
                             alt="Minutz dashboard preview"

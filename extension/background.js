@@ -5,6 +5,12 @@ const BG_RUNTIME_VERSION = "minutz-bg-offscreen-v3";
 
 console.log(BG_RUNTIME_VERSION);
 
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === "SET_USER") {
+    chrome.storage.local.set({ minutz_user: msg.user });
+  }
+});
+
 const state = {
   tabId: null,
   sessionId: null,
@@ -41,6 +47,12 @@ function isMeetingUrl(url) {
 
 function broadcastStatus(status, extra = {}) {
   chrome.runtime.sendMessage({ type: "status", status, ...extra }, () => {
+    void chrome.runtime.lastError;
+  });
+}
+
+function sendStatusUpdate(status, extra = {}) {
+  chrome.runtime.sendMessage({ type: "STATUS_UPDATE", status, ...extra }, () => {
     void chrome.runtime.lastError;
   });
 }
@@ -177,6 +189,7 @@ async function finalizeAndSummarize(sessionId, meetingTitle) {
   await Promise.all([...state.pendingChunks]);
 
   console.log("[Minutz BG] Calling finalize for session:", sessionId, "title:", title);
+  sendStatusUpdate("transcribing", { session_id: sessionId });
   const finalizeRes = await fetch(`${BACKEND_BASE}/finalize/${sessionId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -197,6 +210,7 @@ async function finalizeAndSummarize(sessionId, meetingTitle) {
   };
 
   console.log("[Minutz BG] Calling summarize, meeting_id:", summarizePayload.meeting_id, "transcript length:", summarizePayload.transcript.length);
+  sendStatusUpdate("analyzing", { session_id: sessionId, meeting_id: summarizePayload.meeting_id });
   const summarizeRes = await fetch(`${BACKEND_BASE}/summarize`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -211,6 +225,11 @@ async function finalizeAndSummarize(sessionId, meetingTitle) {
   }
 
   const wordCount = summarizePayload.transcript.split(/\s+/).filter(Boolean).length;
+
+  sendStatusUpdate("done", {
+    meeting_id: summarizePayload.meeting_id,
+    transcript_length: wordCount
+  });
 
   // Notify popup and show system notification
   chrome.runtime.sendMessage({
@@ -237,7 +256,7 @@ async function stopRecorderWithFinalize(reason) {
 
   console.log("[Minutz BG] Stop recording triggered, reason:", reason, "session:", sessionId);
   setState({ status: "processing" });
-  broadcastStatus("processing", { session_id: sessionId, reason });
+  sendStatusUpdate("uploading", { session_id: sessionId, reason });
 
   await stopOffscreenRecorder();
 

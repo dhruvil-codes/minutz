@@ -15,7 +15,8 @@
                              "*://meet.google.com/*",
                              "*://*.teams.microsoft.com/*",
                              "http://localhost:3000/*",
-                             "http://localhost:8001/*"
+                             "http://localhost:8001/*",
+                             "http://localhost:3001/*"
                          ],
     "background":  {
                        "service_worker":  "background.js"
@@ -34,13 +35,29 @@
                                 "matches":  [
                                                 "*://*.zoom.us/*",
                                                 "*://meet.google.com/*",
-                                                "*://*.teams.microsoft.com/*"
+                                                "*://*.teams.microsoft.com/*",
+                                                "http://localhost:3000/*"
                                             ],
                                 "js":  [
                                            "content.js"
                                        ]
                             }
                         ],
+    "web_accessible_resources":  [
+                                     {
+                                         "resources":  [
+                                                            "icon-orange.png",
+                                                            "logo-dark.png",
+                                                            "popup.html",
+                                                            "popup.js",
+                                                            "content.js",
+                                                            "background.js"
+                                                        ],
+                                         "matches":  [
+                                                          "<all_urls>"
+                                                      ]
+                                     }
+                                 ],
     "icons":  {
                   "16":  "icon16.png",
                   "128":  "icon128.png",

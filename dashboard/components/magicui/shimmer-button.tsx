@@ -1,9 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import React, { CSSProperties } from "react";
 
 interface ShimmerButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  href?: string;
+  target?: string;
+  rel?: string;
   shimmerColor?: string;
   shimmerSize?: string;
   borderRadius?: string;
@@ -23,30 +27,30 @@ export const ShimmerButton = React.forwardRef<HTMLButtonElement, ShimmerButtonPr
       background = "#FF6A00",
       className,
       children,
+      href,
+      target,
+      rel,
       ...props
     },
     ref
   ) => {
-    return (
-      <button
-        style={
-          {
-            "--spread": "90deg",
-            "--shimmer-color": shimmerColor,
-            "--radius": borderRadius,
-            "--speed": shimmerDuration,
-            "--cut": shimmerSize,
-            "--bg": background,
-          } as CSSProperties
-        }
-        className={cn(
-          "group relative z-0 flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap border border-white/10 px-6 py-3 text-white [background:var(--bg)] [border-radius:var(--radius)]",
-          "transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px",
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
+    const sharedClassName = cn(
+      "group relative z-0 flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap border border-white/10 px-6 py-3 text-white [background:var(--bg)] [border-radius:var(--radius)]",
+      "transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px",
+      className
+    );
+
+    const sharedStyle = {
+      "--spread": "90deg",
+      "--shimmer-color": shimmerColor,
+      "--radius": borderRadius,
+      "--speed": shimmerDuration,
+      "--cut": shimmerSize,
+      "--bg": background,
+    } as CSSProperties;
+
+    const content = (
+      <>
         <div
           className={cn(
             "-z-30 blur-[2px]",
@@ -67,6 +71,26 @@ export const ShimmerButton = React.forwardRef<HTMLButtonElement, ShimmerButtonPr
             "group-active:shadow-[inset_0_-10px_10px_#ffffff3f]"
           )}
         />
+      </>
+    );
+
+    if (href) {
+      return (
+        <Link
+          href={href}
+          target={target}
+          rel={rel}
+          className={sharedClassName}
+          style={sharedStyle}
+        >
+          {content}
+        </Link>
+      );
+    }
+
+    return (
+      <button style={sharedStyle} className={sharedClassName} ref={ref} {...props}>
+        {content}
       </button>
     );
   }

@@ -4,9 +4,23 @@ const statusDot = document.getElementById("statusDot");
 const meetingBadge = document.getElementById("meetingBadge");
 const meetingTitleInput = document.getElementById("meetingTitleInput");
 const statusCard = document.getElementById("statusCard");
+const statusText = document.getElementById("statusText");
+const statusSubtext = document.getElementById("statusSubtext");
+const statusDotLabel = document.getElementById("statusDotLabel");
+const historyBtn = document.getElementById("historyBtn");
+const historyBackBtn = document.getElementById("historyBackBtn");
+const historyPanel = document.getElementById("historyPanel");
+const historyList = document.getElementById("historyList");
 const primaryBtn = document.getElementById("primaryBtn");
+const authScreen = document.getElementById("authScreen");
+const mainUi = document.getElementById("mainUi");
+const authLoginBtn = document.getElementById("authLoginBtn");
+const authConfirmBtn = document.getElementById("authConfirmBtn");
+
+if (mainUi) mainUi.hidden = true;
 
 let timerHandle = null;
+let pipelineStage = null;
 let uiState = {
   status: "idle",
   startedAt: null,
@@ -25,6 +39,18 @@ function providerFromUrl(url) {
 
 function normalizeMeetingTitle(value) {
   return String(value || "").trim();
+}
+
+function truncateTitle(title) {
+  const text = String(title || "").trim() || "Untitled";
+  if (text.length <= 30) return text;
+  return `${text.slice(0, 30).trimEnd()}…`;
+}
+
+function formatMeetingDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function formatElapsed(startedAt) {
@@ -47,10 +73,22 @@ function renderBadge() {
 }
 
 function renderDot() {
-  statusDot.className = "dot";
-  if (uiState.status === "recording") statusDot.classList.add("recording");
-  if (uiState.status === "processing") statusDot.classList.add("processing");
-  if (uiState.status === "done") statusDot.classList.add("done");
+  if (uiState.status === "processing") {
+    setStatusVisual(pipelineStage || "uploading");
+    return;
+  }
+
+  if (uiState.status === "done") {
+    setStatusVisual("done");
+    return;
+  }
+
+  if (uiState.status === "recording") {
+    setStatusVisual("recording");
+    return;
+  }
+
+  setStatusVisual("idle");
 }
 
 function stopTimer() {
@@ -64,9 +102,162 @@ function startTimer() {
   stopTimer();
   timerHandle = setInterval(() => {
     if (uiState.status === "recording") {
-      statusCard.textContent = `Recording... ${formatElapsed(uiState.startedAt)}`;
+      if (statusText) statusText.textContent = `Recording... ${formatElapsed(uiState.startedAt)}`;
     }
   }, 1000);
+}
+
+function showMainUi() {
+  if (authScreen) authScreen.hidden = true;
+  if (mainUi) mainUi.hidden = false;
+}
+
+function showAuthScreen() {
+  stopTimer();
+  if (mainUi) mainUi.hidden = true;
+  if (authScreen) authScreen.hidden = false;
+}
+
+function showHistoryPanel() {
+  if (historyPanel) historyPanel.hidden = false;
+}
+
+function hideHistoryPanel() {
+  if (historyPanel) historyPanel.hidden = true;
+}
+
+function setStatusVisual(stage) {
+  if (!statusDot) return;
+
+  statusDot.className = "dot";
+  if (stage === "uploading") statusDot.classList.add("uploading");
+  if (stage === "transcribing" || stage === "analyzing") statusDot.classList.add("pulsing");
+  if (stage === "done") statusDot.classList.add("done");
+  if (stage === "recording") statusDot.classList.add("recording");
+
+  if (statusDotLabel) {
+    statusDotLabel.textContent = stage || "idle";
+  }
+}
+
+function setStatusCard(mainText, subText, stage) {
+  if (statusText) statusText.textContent = mainText;
+  if (statusSubtext) statusSubtext.textContent = subText;
+  setStatusVisual(stage);
+}
+
+function historyBadgeClass(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "completed") return "completed";
+  if (normalized === "processing") return "processing";
+  if (normalized === "pending") return "pending";
+  return "pending";
+}
+
+function renderHistoryState(message, buttonLabel) {
+  if (!historyList) return;
+
+  historyList.innerHTML = "";
+  const stateRow = document.createElement("div");
+  stateRow.className = "history-error";
+  const messageNode = document.createElement("div");
+  messageNode.textContent = message;
+  stateRow.appendChild(messageNode);
+
+  if (buttonLabel) {
+    const retryBtn = document.createElement("button");
+    retryBtn.type = "button";
+    retryBtn.className = "history-retry";
+    retryBtn.textContent = buttonLabel;
+    retryBtn.addEventListener("click", () => {
+      loadHistory().catch((error) => {
+        renderHistoryState(error?.message || "Could not load", "Retry");
+      });
+    });
+    stateRow.appendChild(retryBtn);
+  }
+
+  historyList.appendChild(stateRow);
+}
+
+function renderHistoryRows(meetings) {
+  if (!historyList) return;
+
+  historyList.innerHTML = "";
+
+  if (!meetings.length) {
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.textContent = "No meetings yet";
+    historyList.appendChild(empty);
+    return;
+  }
+
+  meetings.forEach((meeting) => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+    row.tabIndex = 0;
+
+    const main = document.createElement("div");
+    main.className = "history-row-main";
+
+    const title = document.createElement("div");
+    title.className = "history-row-title";
+    title.textContent = truncateTitle(meeting.title);
+
+    const meta = document.createElement("div");
+    meta.className = "history-row-meta";
+
+    const date = document.createElement("span");
+    date.textContent = formatMeetingDate(meeting.created_at);
+
+    meta.appendChild(date);
+    main.appendChild(title);
+    main.appendChild(meta);
+
+    const badge = document.createElement("span");
+    const badgeClass = historyBadgeClass(meeting.status);
+    badge.className = `history-badge ${badgeClass}`;
+    badge.textContent = String(meeting.status || "pending");
+
+    row.appendChild(main);
+    row.appendChild(badge);
+
+    const openMeeting = () => {
+      chrome.tabs.create({ url: `http://localhost:3000/dashboard/meeting/${meeting.id}` });
+    };
+
+    row.addEventListener("click", openMeeting);
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMeeting();
+      }
+    });
+
+    historyList.appendChild(row);
+  });
+}
+
+async function loadHistory() {
+  if (!historyList) return;
+
+  renderHistoryState("Loading recent meetings...", "");
+
+  try {
+    const response = await fetch("http://localhost:8001/meetings");
+    if (!response.ok) throw new Error("Could not load");
+
+    const meetings = await response.json();
+    const recentMeetings = [...(Array.isArray(meetings) ? meetings : [])]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+
+    renderHistoryRows(recentMeetings);
+  } catch (error) {
+    renderHistoryState("Could not load", "Retry");
+    throw error;
+  }
 }
 
 function renderButton() {
@@ -93,7 +284,13 @@ function renderButton() {
 
   if (uiState.status === "processing") {
     primaryBtn.classList.add("processing");
-    primaryBtn.innerHTML = '<span class="spinner"></span>Processing...';
+    const stage = pipelineStage;
+    const label =
+      stage === "uploading" ? "Uploading..." :
+      stage === "transcribing" ? "Transcribing..." :
+      stage === "analyzing" ? "Analyzing..." :
+      "Processing...";
+    primaryBtn.innerHTML = `<span class="spinner"></span>${label}`;
     primaryBtn.disabled = true;
     return;
   }
@@ -117,40 +314,39 @@ function renderButton() {
 
 function renderStatusCard() {
   if (uiState.status === "idle") {
-    statusCard.textContent = "Ready to record";
+    pipelineStage = null;
+    setStatusCard("Ready to record", "", "idle");
     stopTimer();
     return;
   }
 
   if (uiState.status === "recording") {
-    statusCard.textContent = `Recording... ${formatElapsed(uiState.startedAt)}`;
+    setStatusCard(`Recording... ${formatElapsed(uiState.startedAt)}`, "Waiting for you to stop", "recording");
     startTimer();
     return;
   }
 
   if (uiState.status === "processing") {
-    statusCard.textContent = "Processing your meeting...";
+    if (pipelineStage === "uploading") {
+      setStatusCard("Uploading audio...", "Sending your recording to the server", "uploading");
+    } else if (pipelineStage === "transcribing") {
+      setStatusCard("Transcribing...", "Whisper is converting your audio to text", "transcribing");
+    } else if (pipelineStage === "analyzing") {
+      setStatusCard("Analyzing with AI...", "GPT-4o is extracting your summary and action items", "analyzing");
+    } else {
+      setStatusCard("Processing your meeting...", "", "processing");
+    }
     stopTimer();
     return;
   }
 
   if (uiState.status === "done") {
     stopTimer();
-    const title = uiState.meetingTitle || "Your meeting";
-    const stats = uiState.transcriptWords
-      ? `~${uiState.transcriptWords} words transcribed`
-      : "Processed successfully";
-    statusCard.innerHTML = `
-      <div class="success-card">
-        <div class="success-check">✓</div>
-        <div class="success-title">Meeting saved!</div>
-        <div class="success-subtitle">${title}</div>
-        <div class="success-stats">${stats}</div>
-      </div>`;
+    setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
     return;
   }
 
-  statusCard.textContent = "Ready to record";
+  setStatusCard("Ready to record", "", "idle");
   stopTimer();
 }
 
@@ -199,6 +395,16 @@ async function detectMeetingTab() {
 }
 
 async function hydrateState() {
+  const authState = await chrome.storage.local.get(["minutz_user"]);
+  const storedUser = authState?.minutz_user;
+
+  if (!storedUser?.email || !storedUser?.token) {
+    showAuthScreen();
+    return;
+  }
+
+  showMainUi();
+
   const [storedUi, bgState] = await Promise.all([
     chrome.storage.local.get([UI_STATE_KEY]),
     chrome.runtime.sendMessage({ type: "getState" })
@@ -238,7 +444,7 @@ async function onPrimaryClick() {
     });
 
     if (!response?.ok) {
-      statusCard.textContent = response?.error || "Unable to start recording";
+      setStatusCard(response?.error || "Unable to start recording", "", "idle");
       return;
     }
 
@@ -252,11 +458,14 @@ async function onPrimaryClick() {
   }
 
   if (uiState.status === "recording") {
+    pipelineStage = "uploading";
+    setStatusCard("Uploading audio...", "Sending your recording to the server", "uploading");
     await setUiState({ status: "processing", startedAt: null });
 
     const response = await chrome.runtime.sendMessage({ type: "stopRecording" });
     if (!response?.ok) {
-      statusCard.textContent = response?.error || "Unable to stop recording";
+      pipelineStage = null;
+      setStatusCard(response?.error || "Unable to stop recording", "", "idle");
       await setUiState({ status: "idle", startedAt: null });
       return;
     }
@@ -274,42 +483,88 @@ if (meetingTitleInput) {
   });
 }
 
+if (authLoginBtn) {
+  authLoginBtn.addEventListener("click", () => {
+    window.open("http://localhost:3000/login", "_blank", "noopener,noreferrer");
+  });
+}
+
+if (authConfirmBtn) {
+  authConfirmBtn.addEventListener("click", () => {
+    hydrateState().catch((error) => {
+      if (authScreen) authScreen.hidden = false;
+      if (mainUi) mainUi.hidden = true;
+      setStatusCard(error?.message || "Failed to verify sign-in", "", "idle");
+    });
+  });
+}
+
+if (historyBtn) {
+  historyBtn.addEventListener("click", () => {
+    showHistoryPanel();
+    loadHistory().catch(() => {});
+  });
+}
+
+if (historyBackBtn) {
+  historyBackBtn.addEventListener("click", () => {
+    hideHistoryPanel();
+  });
+}
+
 primaryBtn.addEventListener("click", () => {
   onPrimaryClick().catch((error) => {
-    statusCard.textContent = error?.message || "Unexpected error";
+    setStatusCard(error?.message || "Unexpected error", "", "idle");
   });
 });
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type !== "status" && message?.type !== "PIPELINE_COMPLETE") return;
+  if (message?.type === "STATUS_UPDATE") {
+    pipelineStage = message.status || null;
 
-  if (message.type === "PIPELINE_COMPLETE") {
-    setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
+    if (message.status === "uploading") {
+      setStatusCard("Uploading audio...", "Sending your recording to the server", "uploading");
+      return;
+    }
+
+    if (message.status === "transcribing") {
+      setStatusCard("Transcribing...", "Whisper is converting your audio to text", "transcribing");
+      return;
+    }
+
+    if (message.status === "analyzing") {
+      setStatusCard("Analyzing with AI...", "GPT-4o is extracting your summary and action items", "analyzing");
+      return;
+    }
+
+    if (message.status === "done") {
+      setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
+      setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
+    }
     return;
   }
+
+  if (message?.type === "PIPELINE_COMPLETE") {
+    setUiState({ status: "done", transcriptWords: message.transcript_length || 0 }).catch(() => {});
+    setStatusCard("Meeting saved ✓", "Your summary will be ready in ~60 seconds", "done");
+    return;
+  }
+
+  if (message?.type !== "status") return;
 
   if (message.status === "recording") {
     setUiState({ status: "recording" }).catch(() => {});
     return;
   }
 
-  if (message.status === "processing") {
-    setUiState({ status: "processing" }).catch(() => {});
-    return;
-  }
-
-  if (message.status === "done") {
-    setUiState({ status: "done" }).catch(() => {});
-    return;
-  }
-
   if (message.status === "error") {
     stopTimer();
-    statusCard.textContent = message.detail || "Something went wrong";
+    pipelineStage = null;
+    setStatusCard(message.detail || "Something went wrong", "", "idle");
     setUiState({ status: "idle", startedAt: null }).catch(() => {});
   }
 });
 
 hydrateState().catch((error) => {
-  statusCard.textContent = error?.message || "Failed to initialize";
+  setStatusCard(error?.message || "Failed to initialize", "", "idle");
 });

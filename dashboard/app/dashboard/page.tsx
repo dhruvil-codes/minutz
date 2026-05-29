@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase";
 
 interface Meeting {
   id: string;
@@ -150,6 +151,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const extensionSyncRef = useRef(false);
 
   const fetchMeetings = useCallback(async () => {
     try {
@@ -186,6 +188,36 @@ export default function DashboardPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [fetchMeetings]);
+
+  useEffect(() => {
+    if (extensionSyncRef.current) return;
+    extensionSyncRef.current = true;
+
+    const syncExtensionUser = async () => {
+      const supabase = createClient();
+      const [{ data: userData }, { data: sessionData }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.auth.getSession(),
+      ]);
+
+      const user = userData.user;
+      const token = sessionData.session?.access_token;
+
+      if (!user?.email || !token) return;
+
+      const payload = { email: user.email, token };
+
+      if (typeof window !== "undefined" && (window as any).chrome?.runtime) {
+        (window as any).chrome.runtime.sendMessage({ type: "SET_USER", user: payload }, () => {
+          void (window as any).chrome.runtime.lastError;
+        });
+      }
+
+      window.dispatchEvent(new CustomEvent("minutz:set-user", { detail: payload }));
+    };
+
+    syncExtensionUser().catch(() => {});
+  }, []);
 
   const derived = useMemo(() => {
     const completionRate = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0;

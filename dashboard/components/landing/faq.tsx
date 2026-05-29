@@ -43,7 +43,7 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section className="bg-black py-28">
+    <section className="bg-background py-28">
       <div className="mx-auto max-w-2xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,10 +52,10 @@ export function Faq() {
           transition={{ duration: 0.55, ease }}
           className="text-center"
         >
-          <h2 className="text-4xl font-bold tracking-tight text-[#000000] dark:text-white">
+          <h2 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
             Frequently Asked Questions
           </h2>
-          <p className="mt-4 text-base text-[#6B6B6B] dark:text-[#A3A3A3]">
+          <p className="mt-4 text-base text-[var(--color-text-secondary)]">
             Common questions about how Minutz works. Reach out at{" "}
             <a href="mailto:hello@minutz.ai" className="text-[#FF6A00] hover:underline">
               hello@minutz.ai
@@ -76,12 +76,12 @@ export function Faq() {
               <AccordionItem
                 key={i}
                 value={`q${i}`}
-                className="border-b border-[#E5E5E5] dark:border-[#2A2A2A]"
+                className="border-b border-[var(--color-border)]"
               >
-                <AccordionTrigger className="py-5 text-left text-sm font-semibold text-[#000000] hover:no-underline dark:text-white">
+                <AccordionTrigger className="py-5 text-left text-sm font-semibold text-[var(--color-text-primary)] hover:no-underline">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="pb-5 text-sm leading-relaxed text-[#6B6B6B] dark:text-[#A3A3A3]">
+                <AccordionContent className="pb-5 text-sm leading-relaxed text-[var(--color-text-secondary)]">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

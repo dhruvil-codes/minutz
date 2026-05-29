@@ -43,7 +43,7 @@ export function Pricing() {
   const [annual, setAnnual] = useState(false);
 
   return (
-    <section id="pricing" className="bg-black py-28">
+    <section id="pricing" className="bg-background py-28">
       <div className="mx-auto max-w-5xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,18 +52,18 @@ export function Pricing() {
           transition={{ duration: 0.55, ease }}
           className="text-center"
         >
-          <h2 className="text-4xl font-bold tracking-tight text-[#000000] dark:text-white">
+          <h2 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
             Simple pricing. Scale when you&apos;re ready.
           </h2>
-          <p className="mx-auto mt-4 max-w-md text-base text-[#6B6B6B] dark:text-[#A3A3A3]">
+          <p className="mx-auto mt-4 max-w-md text-base text-[var(--color-text-secondary)]">
             Start free. Upgrade when your team needs more.
           </p>
         </motion.div>
 
         <div className="mt-8 flex items-center justify-center gap-3">
-          <span className={`text-sm font-medium ${!annual ? "text-[#000000] dark:text-white" : "text-[#A3A3A3]"}`}>Monthly</span>
+          <span className={`text-sm font-medium ${!annual ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"}`}>Monthly</span>
           <Switch checked={annual} onCheckedChange={setAnnual} className="data-[state=checked]:bg-[#FF6A00]" aria-label="Toggle annual billing" />
-          <span className={`flex items-center gap-2 text-sm font-medium ${annual ? "text-[#000000] dark:text-white" : "text-[#A3A3A3]"}`}>
+          <span className={`flex items-center gap-2 text-sm font-medium ${annual ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"}`}>
             Annually
             <span className="rounded-full bg-[#FFF3E8] px-2 py-0.5 text-xs font-semibold text-[#FF6A00] dark:bg-[#2A1800]">Save 20%</span>
           </span>
@@ -79,8 +79,8 @@ export function Pricing() {
               transition={{ duration: 0.5, delay: i * 0.08, ease }}
               className={`relative flex flex-col overflow-hidden rounded-xl p-7 ${
                 plan.popular
-                  ? "border-2 border-[#FF6A00] bg-white dark:bg-[#1A1A1A]"
-                  : "border border-[#E5E5E5] bg-white dark:border-[#2A2A2A] dark:bg-[#1A1A1A]"
+                  ? "border-2 border-[#FF6A00] bg-[var(--color-surface-raised)]"
+                  : "border border-[var(--color-border)] bg-[var(--color-surface-raised)]"
               }`}
             >
               {plan.popular && (
@@ -93,18 +93,18 @@ export function Pricing() {
                 </>
               )}
 
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B6B6B]">{plan.name}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--color-text-secondary)]">{plan.name}</p>
               <div className="mt-4 flex items-end gap-1">
-                <span className="text-5xl font-bold tracking-tight text-[#000000] dark:text-white">
+                <span className="text-5xl font-bold tracking-tight text-[var(--color-text-primary)]">
                   ${annual ? plan.annual : plan.monthly}
                 </span>
-                <span className="mb-1.5 text-sm text-[#A3A3A3]">{plan.perSeat ? "/seat/mo" : "/month"}</span>
+                <span className="mb-1.5 text-sm text-[var(--color-text-secondary)]">{plan.perSeat ? "/seat/mo" : "/month"}</span>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-[#6B6B6B] dark:text-[#A3A3A3]">{plan.tagline}</p>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-secondary)]">{plan.tagline}</p>
 
               <ul className="mt-6 flex-1 space-y-2.5">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-[#000000] dark:text-white">
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-[var(--color-text-primary)]">
                     <Check className="h-4 w-4 shrink-0 text-[#FF6A00]" />
                     {f}
                   </li>
@@ -117,7 +117,7 @@ export function Pricing() {
                     Choose {plan.name}
                   </ShimmerButton>
                 ) : (
-                  <button className="w-full rounded-lg border border-[#E5E5E5] py-2.5 text-sm font-semibold text-[#000000] transition-colors hover:border-[#FF6A00] hover:text-[#FF6A00] dark:border-[#2A2A2A] dark:text-white dark:hover:border-[#FF6A00] dark:hover:text-[#FF6A00]">
+                  <button className="w-full rounded-lg border border-[var(--color-border)] py-2.5 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:border-[#FF6A00] hover:text-[#FF6A00]">
                     Choose {plan.name}
                   </button>
                 )}

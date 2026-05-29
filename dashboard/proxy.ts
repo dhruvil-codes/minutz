@@ -6,7 +6,6 @@ const PUBLIC_ROUTES = ["/", "/login", "/signup"];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Extension API routes must be accessible without a session
   if (pathname.startsWith("/api/extension/")) {
     return NextResponse.next({ request });
   }
@@ -22,13 +21,11 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -38,9 +35,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_ROUTES.includes(pathname);
-
-  if (!user && !isPublic) {
+  if (!user && !PUBLIC_ROUTES.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -173,7 +173,7 @@ function SignalChart() {
 
 export function Features() {
   return (
-    <section id="features" className="bg-black pb-16 pt-16 md:pb-32 md:pt-24">
+    <section id="features" className="bg-background pb-16 pt-16 md:pb-32 md:pt-24">
       <div className="mx-auto max-w-3xl px-6 lg:max-w-5xl">
         <div className="relative">
           <div className="relative z-10 grid grid-cols-6 gap-3">
@@ -181,8 +181,8 @@ export function Features() {
               <Card className="relative flex h-full overflow-hidden">
                 <CardContent className="relative m-auto size-fit pt-6">
                   <CustomizableMark />
-                  <h2 className="mt-6 text-center text-3xl font-semibold">To clarity</h2>
-                  <p className="mt-2 text-center text-foreground">
+                  <h2 className="mt-6 text-center text-3xl font-semibold text-[var(--color-text-primary)]">To clarity</h2>
+                  <p className="mt-2 text-center text-[var(--color-text-secondary)]">
                     From recording to summary in under a minute.
                   </p>
                 </CardContent>
@@ -196,10 +196,10 @@ export function Features() {
                     <Mic className="m-auto size-8" strokeWidth={1} />
                   </div>
                   <div className="relative z-10 mt-6 space-y-2 text-center">
-                    <h2 className="group-hover:text-secondary-950 text-lg font-medium transition dark:text-white">
+                      <h2 className="group-hover:text-[#FF6A00] text-lg font-medium transition text-[var(--color-text-primary)]">
                       Invisible Recording
                     </h2>
-                    <p className="text-foreground">
+                    <p className="text-[var(--color-text-secondary)]">
                       No bot joins. No notification sent. Chrome Extension captures audio directly from your browser tab.
                     </p>
                   </div>
@@ -214,8 +214,8 @@ export function Features() {
                     <SpeedChart />
                   </div>
                   <div className="relative z-10 mt-14 space-y-2 text-center">
-                    <h2 className="text-lg font-medium transition">AI Analysis</h2>
-                    <p className="text-foreground">
+                    <h2 className="text-lg font-medium transition text-[var(--color-text-primary)]">AI Analysis</h2>
+                    <p className="text-[var(--color-text-secondary)]">
                       Whisper transcribes. GPT-4o extracts summaries, action items, and decisions automatically.
                     </p>
                   </div>
@@ -231,10 +231,10 @@ export function Features() {
                       <Zap className="m-auto size-5" strokeWidth={1} />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="group-hover:text-secondary-950 text-lg font-medium text-zinc-800 transition dark:text-white">
+                      <h2 className="group-hover:text-[#FF6A00] text-lg font-medium text-[var(--color-text-primary)] transition">
                         Auto-Synced
                       </h2>
-                      <p className="text-foreground">Results land in Slack, Notion, or HubSpot before you close the tab.</p>
+                      <p className="text-[var(--color-text-secondary)]">Results land in Slack, Notion, or HubSpot before you close the tab.</p>
                     </div>
                   </div>
                   <div className="relative -mb-6 -mr-6 mt-6 h-fit rounded-tl-[var(--radius)] border-l border-t p-6 py-6 sm:ml-6">
@@ -257,8 +257,8 @@ export function Features() {
                       <Users className="m-auto size-6" strokeWidth={1} />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-lg font-medium transition">Built for your team</h2>
-                      <p className="text-foreground">
+                      <h2 className="text-lg font-medium transition text-[var(--color-text-primary)]">Built for your team</h2>
+                      <p className="text-[var(--color-text-secondary)]">
                         Sales, PM, and Financial modes. One tool, three lenses.
                       </p>
                     </div>

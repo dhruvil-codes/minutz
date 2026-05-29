@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils";
 
+const extensionRepoUrl = "https://github.com/dhruvil-codes/minutz";
+
 type FooterLinkColumn = {
   title: string;
   links: {
@@ -23,7 +25,7 @@ const footerLinks: FooterLinkColumn[] = [
       { id: 1, title: "Features", url: "#features" },
       { id: 2, title: "Pricing", url: "#pricing" },
       { id: 3, title: "Dashboard", url: "/dashboard" },
-      { id: 4, title: "Chrome Extension", url: "#" },
+      { id: 4, title: "Chrome Extension", url: extensionRepoUrl },
     ],
   },
   {
@@ -247,26 +249,27 @@ export function Footer() {
   const gridText = useMemo(() => (tablet ? "Minutz" : "Make meetings useful"), [tablet]);
 
   return (
-    <footer id="footer" className="relative overflow-hidden bg-black pb-0 text-white">
+    <footer id="footer" className="relative overflow-hidden bg-background pb-0 text-[var(--color-text-primary)]">
       <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 md:flex-row md:items-start md:justify-between">
         <div className="flex max-w-sm flex-col items-start gap-5">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo-dark.png" alt="Minutz" width={104} height={26} className="h-auto" />
+            <Image src="/logo-light.png" alt="Minutz" width={104} height={26} className="block h-auto dark:hidden" />
+            <Image src="/logo-dark.png" alt="Minutz" width={104} height={26} className="hidden h-auto dark:block" />
           </Link>
-          <p className="text-sm font-medium leading-relaxed text-[#A3A3A3]">
+          <p className="text-sm font-medium leading-relaxed text-[var(--color-text-secondary)]">
             Invisible AI meeting intelligence for teams that need decisions, action items, and summaries before the tab closes.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {trustBadges.map((badge) => (
               <span
                 key={badge}
-                className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-[#A3A3A3]"
+                className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]"
               >
                 {badge}
               </span>
             ))}
           </div>
-          <p className="text-xs text-[#6B6B6B]">
+          <p className="text-xs text-[var(--color-text-secondary)]">
             © 2026 Minutz. Built by{' '}
             <a href="https://x.com/bydhruvil" target="_blank" rel="noopener noreferrer">
               @bydhruvil
@@ -278,14 +281,14 @@ export function Footer() {
         <div className="grid flex-1 grid-cols-2 gap-8 md:max-w-2xl md:grid-cols-4">
           {footerLinks.map((column) => (
             <ul key={column.title} className="flex flex-col gap-2">
-              <li className="mb-2 text-sm font-semibold text-white">{column.title}</li>
+              <li className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">{column.title}</li>
               {column.links.map((link) => (
                 <li
                   key={link.id}
-                  className="group inline-flex w-fit cursor-pointer items-center justify-start gap-1 text-sm text-[#A3A3A3] transition-colors hover:text-white"
+                  className="group inline-flex w-fit cursor-pointer items-center justify-start gap-1 text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
                 >
                   <Link href={link.url}>{link.title}</Link>
-                  <span className="flex size-4 translate-x-0 items-center justify-center rounded border border-white/10 text-[#FF6A00] opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                  <span className="flex size-4 translate-x-0 items-center justify-center rounded border border-[var(--color-border)] text-[#FF6A00] opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
                     <ChevronRight className="h-3 w-3" />
                   </span>
                 </li>
@@ -296,7 +299,7 @@ export function Footer() {
       </div>
 
       <div className="relative z-0 mt-12 h-48 w-full md:h-64">
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-40% to-black" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-40% to-background" />
         <div className="absolute inset-0 mx-6">
           <FlickeringGrid
             text={gridText}

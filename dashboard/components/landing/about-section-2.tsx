@@ -41,7 +41,7 @@ export function AboutSection2() {
   };
 
   return (
-    <section id="about" className="bg-black px-6 pb-12 pt-24 md:pb-8 md:pt-28">
+    <section id="about" className="bg-background px-6 pb-12 pt-24 md:pb-8 md:pt-28">
       <div className="mx-auto max-w-3xl lg:max-w-5xl" ref={heroRef}>
         <div className="flex flex-col items-start gap-8 lg:flex-row">
           <div className="w-full flex-1">
@@ -50,7 +50,7 @@ export function AboutSection2() {
               animationNum={0}
               timelineRef={heroRef}
               customVariants={revealVariants}
-              className="text-3xl font-semibold !leading-[110%] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl"
+              className="text-3xl font-semibold !leading-[110%] tracking-tight text-[var(--color-text-primary)] sm:text-4xl md:text-5xl lg:text-6xl"
             >
               We are{" "}
               <TimelineContent
@@ -68,7 +68,7 @@ export function AboutSection2() {
                 animationNum={2}
                 timelineRef={heroRef}
                 customVariants={textVariants}
-                className="inline-block rounded-md border-2 border-dotted border-white/25 px-2 text-white"
+                className="inline-block rounded-md border-2 border-dotted border-[var(--color-border)] px-2 text-[var(--color-text-primary)]"
               >
                 invisibly
               </TimelineContent>{" "}
@@ -78,7 +78,7 @@ export function AboutSection2() {
                 animationNum={3}
                 timelineRef={heroRef}
                 customVariants={textVariants}
-                className="inline-block rounded-md border-2 border-dotted border-[#FF6A00]/70 px-2 text-[#FFB347]"
+                className="inline-block rounded-md border-2 border-dotted border-[#FF6A00]/70 px-2 text-[#FF6A00]"
               >
                 act on.
               </TimelineContent>
@@ -95,7 +95,7 @@ export function AboutSection2() {
                 <div className="mb-1 text-sm font-medium uppercase tracking-[0.14em] text-[#FF6A00]">
                   Why Minutz exists
                 </div>
-                <div className="text-base font-medium leading-relaxed text-[#A3A3A3] sm:text-xl">
+                <div className="text-base font-medium leading-relaxed text-[var(--color-text-secondary)] sm:text-xl">
                   No bots in the room. No context lost. Just summaries, action items, and follow-ups synced where work already happens.
                 </div>
               </TimelineContent>

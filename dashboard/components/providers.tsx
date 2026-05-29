@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { ThemeProvider } from "next-themes";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
-
-  return <>{children}</>;
+  return (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="minutz-theme">
+      {children}
+    </ThemeProvider>
+  );
 }

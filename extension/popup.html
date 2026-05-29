@@ -22,10 +22,15 @@
 
     * { box-sizing: border-box; }
 
+    html, body {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       width: 320px;
       padding: 20px;
+      min-height: 100%;
       background: var(--color-bg);
       color: var(--color-text-primary);
       font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
@@ -34,6 +39,89 @@
     }
 
     .popup { display: flex; flex-direction: column; gap: 12px; }
+
+    #authScreen[hidden],
+    #mainUi[hidden] {
+      display: none !important;
+    }
+
+    #authScreen {
+      min-height: calc(100vh - 40px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 280px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: 12px;
+      padding: 18px 16px 16px;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+    }
+
+    .auth-logo {
+      display: block;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 12px;
+    }
+
+    .auth-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--color-text-primary);
+    }
+
+    .auth-copy {
+      margin: 8px 0 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--color-text-secondary);
+    }
+
+    .auth-button {
+      width: 100%;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 150ms var(--ease-snap), border-color 150ms var(--ease-snap), color 150ms var(--ease-snap), opacity 150ms var(--ease-snap);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .auth-button.primary {
+      background: var(--color-accent);
+      color: var(--color-text-primary);
+    }
+    .auth-button.primary:hover { background: var(--color-accent-hover); }
+
+    .auth-button.secondary {
+      margin-top: 8px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+    }
+    .auth-button.secondary:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
+
+    .auth-note {
+      margin: 10px 0 0;
+      font-size: 10px;
+      line-height: 1.4;
+      color: var(--color-text-tertiary);
+    }
 
     .header {
       display: flex;
@@ -45,6 +133,12 @@
     .brand { display: inline-flex; align-items: center; min-width: 0; }
     .brand-logo { height: 28px; width: auto; display: block; }
 
+    .header-controls {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
     .status-stack {
       display: inline-flex;
       flex-direction: column;
@@ -52,6 +146,28 @@
       gap: 4px;
       line-height: 1;
     }
+
+    .status-head {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #a3a3a3;
+      cursor: pointer;
+      transition: color 150ms var(--ease-snap);
+    }
+    .history-btn:hover { color: #ffffff; }
+    .history-btn svg { width: 16px; height: 16px; display: block; }
 
     .dot {
       width: 8px;
@@ -61,7 +177,8 @@
       transition: background-color 160ms var(--ease-snap), box-shadow 160ms var(--ease-snap);
     }
     .dot.recording { background: var(--color-accent); box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); }
-    .dot.processing { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
+    .dot.uploading { background: #ff6a00; box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); }
+    .dot.pulsing { background: #ff6a00; box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.2); animation: dotPulse 1.4s ease-in-out infinite; }
     .dot.done { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
 
     #statusDotLabel { font-size: 9px; color: var(--color-text-tertiary); text-transform: lowercase; text-align: center; letter-spacing: 0.02em; }
@@ -124,8 +241,166 @@
       color: var(--color-text-secondary);
       min-height: 56px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 4px;
+    }
+
+    #statusText {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--color-text-primary);
+    }
+
+    #statusSubtext {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    #mainUi {
+      position: relative;
+    }
+
+    #historyPanel[hidden] {
+      display: none !important;
+    }
+
+    #historyPanel {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #0d0d0d;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .history-topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 24px;
+    }
+
+    .history-back {
+      border: none;
+      background: transparent;
+      color: #a3a3a3;
+      padding: 0;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 150ms var(--ease-snap);
+    }
+    .history-back:hover { color: #ffffff; }
+
+    .history-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      background: #111111;
+    }
+
+    .history-empty {
+      padding: 14px 12px;
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .history-error {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: var(--color-text-secondary);
+      border-bottom: 1px solid var(--color-border);
+      font-size: 12px;
+    }
+
+    .history-retry {
+      width: fit-content;
+      border: 1px solid var(--color-border);
+      background: #1a1a1a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .history-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      transition: background 150ms var(--ease-snap);
+    }
+    .history-row:hover { background: #242424; }
+
+    .history-row-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-row-title {
+      font-size: 12px;
+      line-height: 1.35;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #6b6b6b;
+    }
+
+    .history-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1;
+      text-transform: capitalize;
+      border: 1px solid transparent;
+    }
+    .history-badge.completed { color: #86efac; border-color: rgba(34, 197, 94, 0.25); background: rgba(34, 197, 94, 0.1); }
+    .history-badge.processing, .history-badge.pending { color: #ffb347; border-color: rgba(255, 106, 0, 0.3); background: rgba(255, 106, 0, 0.1); }
+    .history-badge.processing { animation: historyPulse 1.4s ease-in-out infinite; }
+    .history-badge.pending { color: #a3a3a3; border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.05); }
+
+    @keyframes historyPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.96); opacity: 0.76; }
     }
 
     .action {
@@ -161,29 +436,6 @@
     }
     .action.secondary:hover:not(:disabled) { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
 
-    .success-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 16px;
-    }
-    .success-check {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 2px solid #22c55e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      color: #22c55e;
-      margin-bottom: 2px;
-    }
-    .success-title { font-size: 14px; font-weight: 600; color: #fff; }
-    .success-subtitle { font-size: 12px; color: var(--color-text-secondary); }
-    .success-stats { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
     .action:disabled { opacity: 0.75; cursor: not-allowed; }
 
     .spinner {
@@ -204,29 +456,69 @@
       letter-spacing: 0.03em;
     }
 
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.82); opacity: 0.72; }
+    }
+
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <main class="popup">
-    <header class="header">
-      <div class="brand" aria-label="Minutz">
-        <img class="brand-logo" src="logo-light.png" alt="Minutz logo" />
+    <div id="authScreen" hidden>
+      <div class="auth-card">
+        <img src="icon-orange.png" alt="Minutz" class="auth-logo" width="40" height="40" />
+        <h1 class="auth-title">Sign in to use Minutz</h1>
+        <p class="auth-copy">Create a free account to start recording meetings invisibly.</p>
+        <button id="authLoginBtn" class="auth-button primary" type="button">Sign In / Sign Up</button>
+        <p class="auth-note">After signing in, come back and click below</p>
+        <button id="authConfirmBtn" class="auth-button secondary" type="button">I've signed in &#10003;</button>
       </div>
-      <div class="status-stack">
-        <span id="statusDot" class="dot"></span>
-        <span id="statusDotLabel">idle</span>
-      </div>
-    </header>
+    </div>
+
+    <div id="mainUi">
+      <header class="header">
+        <div class="brand" aria-label="Minutz">
+          <img class="brand-logo" src="logo-light.png" alt="Minutz logo" />
+        </div>
+        <div class="header-controls">
+          <div class="status-stack">
+            <div class="status-head">
+              <span id="statusDot" class="dot"></span>
+              <button id="historyBtn" class="history-btn" type="button" aria-label="Open meeting history" title="Recent meetings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 3-6.7" />
+                  <path d="M3 3v4h4" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </button>
+            </div>
+            <span id="statusDotLabel">idle</span>
+          </div>
+        </div>
+      </header>
 
     <div id="meetingBadge" class="pill idle">Open a meeting to start</div>
     <input id="meetingTitleInput" class="title-input" type="text" maxlength="120" placeholder="Meeting title (e.g., Product Weekly Sync)" />
 
-    <section id="statusCard" class="card">Ready to record</section>
+    <section id="statusCard" class="card">
+      <p id="statusText">Ready to record</p>
+      <p id="statusSubtext" style="font-size:11px; color:#6B6B6B; margin-top:4px;"></p>
+    </section>
 
     <button id="primaryBtn" class="action primary" type="button">Start Recording</button>
 
     <footer class="footer">Minutz - Invisible AI Meeting Intelligence</footer>
+
+      <div id="historyPanel" hidden>
+        <div class="history-topbar">
+          <button id="historyBackBtn" class="history-back" type="button">&#8592; Back</button>
+          <div class="history-title">Recent Meetings</div>
+        </div>
+        <div id="historyList" class="history-list" aria-live="polite"></div>
+      </div>
+    </div>
   </main>
 
   <script src="popup.js"></script>
