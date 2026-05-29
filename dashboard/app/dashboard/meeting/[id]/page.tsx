@@ -204,25 +204,26 @@ function NicheIntelligenceCard({ niche, data }: { niche: string; data: NicheData
           Extracted intelligence for the {niche || "selected"} workflow.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="grid grid-cols-2 gap-3 auto-rows-auto">
         {rows.map((row) => {
           if (!row.value || (Array.isArray(row.value) && row.value.length === 0)) return null;
           const values = Array.isArray(row.value) ? row.value : [row.value];
           return (
-            <Card key={row.label} className="rounded-lg border border-[#2A2A2A] bg-[#242424] text-white shadow-none">
-              <CardHeader className="pb-3">
-                <CardDescription className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">
-                  {row.label}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
+            <Card
+              key={row.label}
+              className="flex h-auto min-h-0 flex-col gap-2 rounded-lg border border-[#2A2A2A] bg-[#242424] p-4 text-white shadow-none"
+            >
+              <CardDescription className="text-xs font-medium text-muted-foreground">
+                {row.label}
+              </CardDescription>
+              <CardContent className="space-y-2 p-0">
                 {values.map((value, index) => (
-                  <Badge
+                  <p
                     key={`${row.label}-${index}`}
-                    className="border border-[#2A2A2A] bg-[#0D0D0D] text-[15px] font-medium text-white"
+                    className="text-sm font-medium text-foreground break-words"
                   >
                     {value}
-                  </Badge>
+                  </p>
                 ))}
               </CardContent>
             </Card>

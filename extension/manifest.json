@@ -42,8 +42,8 @@
         },
         {
             "matches": [
-                "http://localhost:3000/*",
-                "http://localhost:3001/*"
+                "http://localhost:3000/dashboard*",
+                "http://localhost:3001/dashboard*"
             ],
             "js": ["auth-relay.js"],
             "run_at": "document_idle"

@@ -441,6 +441,31 @@ async function detectMeetingTab() {
   });
 }
 
+async function checkAuth() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["minutz_user"], async (result) => {
+      if (result.minutz_user) {
+        resolve(result.minutz_user);
+        return;
+      }
+      try {
+        const response = await fetch("http://localhost:3000/api/auth/check", {
+          credentials: "include"
+        });
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+          chrome.storage.local.set({ minutz_user: data.user });
+          resolve(data.user);
+        } else {
+          resolve(null);
+        }
+      } catch {
+        resolve(null);
+      }
+    });
+  });
+}
+
 async function hydrateState() {
   const user = await checkAuth();
   if (!user) {
@@ -567,31 +592,6 @@ async function onPrimaryClick() {
     signInBtn.addEventListener("click", () => {
       console.log("[Minutz Popup] Button clicked:", "signInBtn");
       chrome.tabs.create({ url: "http://localhost:3000/login" });
-    });
-  }
-
-  async function checkAuth() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(["minutz_user"], async (result) => {
-        if (result.minutz_user) {
-          resolve(result.minutz_user);
-          return;
-        }
-        try {
-          const response = await fetch("http://localhost:3000/api/auth/check", {
-            credentials: "include"
-          });
-          const data = await response.json();
-          if (data.authenticated && data.user) {
-            chrome.storage.local.set({ minutz_user: data.user });
-            resolve(data.user);
-          } else {
-            resolve(null);
-          }
-        } catch {
-          resolve(null);
-        }
-      });
     });
   }
 

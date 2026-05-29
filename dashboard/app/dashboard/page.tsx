@@ -150,6 +150,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({ total: 0, completed: 0, processing: 0, this_week: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const extensionSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -304,18 +305,45 @@ export default function DashboardPage() {
     };
   }, [meetings, stats]);
 
+  const getDaysBack = (r: string) => (r === "7d" ? 7 : r === "30d" ? 30 : 90);
+
+  const chartData = useMemo(() => {
+    const daysBack = getDaysBack(range);
+    const buckets: Record<string, number> = {};
+
+    for (let i = daysBack - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+      buckets[key] = 0;
+    }
+
+    meetings.forEach((m) => {
+      const d = new Date(m.created_at);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysBack);
+
+      if (d >= cutoff) {
+        const key = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+        if (key in buckets) buckets[key]++;
+      }
+    });
+
+    return Object.entries(buckets).map(([date, count]) => ({ date, count }));
+  }, [meetings, range]);
+
   const chart = useMemo(() => {
     const width = 760;
-    const top = 18;
-    const bottom = 140;
-    const left = 34;
-    const right = 34;
+    const top = 10;
+    const bottom = 166;
+    const left = 14;
+    const right = 10;
     const usableWidth = width - left - right;
     const usableHeight = bottom - top;
-    const maxValue = Math.max(1, derived.maxDayCount);
+    const maxValue = Math.max(1, ...chartData.map((d) => d.count));
 
-    const points = derived.meetingsByDay.map((day, index) => {
-      const x = left + (usableWidth / Math.max(1, derived.meetingsByDay.length - 1)) * index;
+    const points = chartData.map((day, index) => {
+      const x = left + (usableWidth / Math.max(1, chartData.length - 1)) * index;
       const y = bottom - (day.count / maxValue) * usableHeight;
       return { ...day, x, y };
     });
@@ -332,7 +360,7 @@ export default function DashboardPage() {
       areaPath,
       gridLines: [top, top + usableHeight / 3, top + (usableHeight / 3) * 2, bottom],
     };
-  }, [derived.maxDayCount, derived.meetingsByDay]);
+  }, [chartData]);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 text-white">
@@ -402,22 +430,40 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <Card className={`${surface} py-0 xl:col-span-2`}>
+            <Card className={`${surface} self-start py-0 xl:col-span-2`}>
               <CardHeader className="flex flex-row items-center justify-between px-5 pb-3 pt-4">
                 <div>
-                  <CardTitle className="text-sm font-semibold text-white">Meetings last 7 days</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-white">
+                    Last {range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}
+                  </CardTitle>
                   <p className="mt-1 text-xs text-[#6B6B6B]">Captured sessions by day</p>
+                </div>
+                <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+                  {(["7d", "30d", "90d"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRange(r)}
+                      className={`rounded-md px-3 py-1 text-xs font-medium transition-all duration-200 ${
+                        range === r
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {r === "7d" ? "7D" : r === "30d" ? "30D" : "90D"}
+                    </button>
+                  ))}
                 </div>
               </CardHeader>
               <CardContent className="px-5 pb-0">
                 <Card className={`${subtleSurface} overflow-hidden py-0`}>
                   <CardContent className="p-0">
-                    <div className="w-full" style={{ height: 180 }}>
+                    <div className="w-full" style={{ height: 200 }}>
                       <svg
-                        className="block h-[180px] w-full"
-                        viewBox="0 0 760 180"
+                        key={range}
+                        className="block h-[200px] w-full"
+                        viewBox="0 0 760 200"
                         role="img"
-                        aria-label="Line graph showing meetings captured over the last seven days"
+                        aria-label={`Line graph showing meetings captured over the last ${range === "7d" ? "7 days" : range === "30d" ? "30 days" : "90 days"}`}
                         preserveAspectRatio="none"
                       >
                         <defs>
@@ -463,6 +509,7 @@ export default function DashboardPage() {
                           strokeLinejoin="round"
                           opacity="0.7"
                           vectorEffect="non-scaling-stroke"
+                          className="animate-[drawChart_400ms_ease-in-out]"
                         />
                         <path
                           d={chart.linePath}
@@ -473,15 +520,16 @@ export default function DashboardPage() {
                           strokeLinejoin="round"
                           filter="url(#minutzTrendGlow)"
                           vectorEffect="non-scaling-stroke"
+                          className="animate-[drawChart_400ms_ease-in-out]"
                         />
 
                         {chart.points.map((point) => (
-                          <g key={point.label}>
+                          <g key={point.date}>
                             <line
                               x1={point.x}
                               x2={point.x}
                               y1={point.y}
-                              y2="140"
+                              y2={chart.bottom}
                               stroke={point.count > 0 ? "#3B2513" : "#2A2A2A"}
                               strokeWidth="1"
                               strokeDasharray={point.count > 0 ? "0" : "3 4"}
@@ -499,14 +547,26 @@ export default function DashboardPage() {
                             />
                             <text
                               x={point.x}
-                              y="170"
+                              y="190"
                               textAnchor="middle"
                               className="fill-[#6B6B6B] text-[10px] font-medium"
                             >
-                              {point.label}
+                              {point.date}
                             </text>
                           </g>
                         ))}
+                        <style>{`
+                          @keyframes drawChart {
+                            from {
+                              opacity: 0;
+                              transform: translateY(8px);
+                            }
+                            to {
+                              opacity: 1;
+                              transform: translateY(0);
+                            }
+                          }
+                        `}</style>
                       </svg>
                     </div>
                   </CardContent>
