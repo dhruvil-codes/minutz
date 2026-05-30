@@ -386,22 +386,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message?.type === "startRecording") {
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      const activeTab = tabs?.[0];
-      const meetingTitle = String(message?.meeting_title || "").trim();
+      try {
+        const activeTab = tabs?.[0];
+        const meetingTitle = String(message?.meeting_title || "").trim();
 
-      if (!activeTab?.id || !activeTab.url?.startsWith("http")) {
-        sendResponse({ ok: false, error: "Can't record this page. Open a website or meeting tab first." });
-        return;
+        if (!activeTab?.id || !activeTab.url?.startsWith("http")) {
+          sendResponse({ ok: false, error: "Can't record this page. Open a website or meeting tab first." });
+          return;
+        }
+
+        if (state.status === "recording") {
+          sendResponse({ ok: false, error: "Recording already in progress" });
+          return;
+        }
+
+        setState({ meetingTitle });
+        const result = await startRecording(activeTab.id);
+        sendResponse(result);
+      } catch (error) {
+        console.error("[Minutz BG] startRecording failed:", error);
+        sendResponse({ ok: false, error: error?.message || "Unable to start recording" });
       }
-
-      if (state.status === "recording") {
-        sendResponse({ ok: false, error: "Recording already in progress" });
-        return;
-      }
-
-      setState({ meetingTitle });
-      const result = await startRecording(activeTab.id);
-      sendResponse(result);
     });
     return true;
   }

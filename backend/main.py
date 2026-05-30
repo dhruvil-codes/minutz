@@ -231,22 +231,38 @@ async def finalize(session_id: str, body: FinalizeBody):
         if not chunks:
             raise HTTPException(status_code=400, detail="No chunks found for session")
 
-        # --- Step 1: Concatenate and compress to mono 16kHz MP3 @ 64k ---
+        # --- Step 1: Load audio and compress to mono 16kHz MP3 @ 64k ---
         try:
             from pydub import AudioSegment
 
-            # Concatenate raw bytes first — only chunk_0 has the webm EBML header,
-            # subsequent chunks are continuation data and can't be opened individually.
-            print(f"[finalize] concatenating {len(chunks)} chunks as raw bytes")
-            combined_bytes = b""
-            for chunk_path in chunks:
-                combined_bytes += chunk_path.read_bytes()
+            if len(chunks) == 1:
+                chunk_path = chunks[0]
+                source_format = chunk_path.suffix.lstrip(".").lower() or None
+                print(f"[finalize] loading single uploaded file: {chunk_path.name} ({source_format or 'auto'})")
+                if source_format:
+                    combined = AudioSegment.from_file(str(chunk_path), format=source_format)
+                else:
+                    combined = AudioSegment.from_file(str(chunk_path))
+            else:
+                # Extension recordings are streamed as sequential WebM chunks; those
+                # chunks need to be reassembled as raw bytes before ffmpeg can open them.
+                if not all(p.suffix.lower() == ".webm" for p in chunks):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Multiple uploaded chunks must be WebM recordings from the extension",
+                    )
 
-            combined_webm = session_dir / "combined.webm"
-            combined_webm.write_bytes(combined_bytes)
-            print(f"[finalize] combined webm size={len(combined_bytes) / 1024:.1f} KB")
+                print(f"[finalize] concatenating {len(chunks)} webm chunks as raw bytes")
+                combined_bytes = b""
+                for chunk_path in chunks:
+                    combined_bytes += chunk_path.read_bytes()
 
-            combined = AudioSegment.from_file(str(combined_webm), format="webm")
+                combined_webm = session_dir / "combined.webm"
+                combined_webm.write_bytes(combined_bytes)
+                print(f"[finalize] combined webm size={len(combined_bytes) / 1024:.1f} KB")
+
+                combined = AudioSegment.from_file(str(combined_webm), format="webm")
+
             duration_seconds = len(combined) / 1000
             print(f"[finalize] total duration={duration_seconds:.1f}s")
 
