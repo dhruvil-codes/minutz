@@ -442,28 +442,28 @@ async function detectMeetingTab() {
 }
 
 async function checkAuth() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["minutz_user"], async (result) => {
-      if (result.minutz_user) {
-        resolve(result.minutz_user);
-        return;
-      }
-      try {
-        const response = await fetch("http://localhost:3000/api/auth/check", {
-          credentials: "include"
-        });
-        const data = await response.json();
-        if (data.authenticated && data.user) {
-          chrome.storage.local.set({ minutz_user: data.user });
-          resolve(data.user);
-        } else {
-          resolve(null);
-        }
-      } catch {
-        resolve(null);
-      }
+  // Check cached storage first (fast)
+  const cached = await new Promise(resolve => {
+    chrome.storage.local.get(['minutz_user'], result => {
+      resolve(result.minutz_user || null);
     });
   });
+  if (cached) return cached;
+
+  // No cache — call the dashboard API
+  try {
+    const res = await fetch(
+      'http://localhost:3000/api/auth/check',
+      { credentials: 'include', signal: AbortSignal.timeout(3000) }
+    );
+    const data = await res.json();
+    if (data.authenticated && data.user) {
+      chrome.storage.local.set({ minutz_user: data.user });
+      return data.user;
+    }
+  } catch (e) {}
+
+  return null;
 }
 
 async function hydrateState() {

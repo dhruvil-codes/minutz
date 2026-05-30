@@ -9,6 +9,7 @@ import {
   IconVideo,
   IconSettings,
   IconLogout,
+  IconUpload,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
@@ -31,6 +32,11 @@ const navLinks = [
     label: "Meetings",
     href: "/dashboard/meetings",
     icon: <IconVideo className="h-5 w-5 shrink-0 text-[#A3A3A3]" />,
+  },
+  {
+    label: "Import",
+    href: "/dashboard/import",
+    icon: <IconUpload className="h-5 w-5 shrink-0 text-[#A3A3A3]" />,
   },
   {
     label: "Settings",
