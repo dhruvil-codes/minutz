@@ -16,7 +16,10 @@
         "<all_urls>",
         "http://localhost:3000/*",
         "http://localhost:8001/*",
-        "http://localhost:3001/*"
+        "http://localhost:3001/*",
+        "https://minutz-backend.onrender.com/*",
+        "https://minutz-dashboard.vercel.app/*",
+        "https://*.vercel.app/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -38,7 +41,9 @@
         {
             "matches": [
                 "http://localhost:3000/dashboard*",
-                "http://localhost:3001/dashboard*"
+                "http://localhost:3001/dashboard*",
+                "https://minutz-dashboard.vercel.app/dashboard*",
+                "https://*.vercel.app/dashboard*"
             ],
             "js": ["auth-relay.js"],
             "run_at": "document_idle"

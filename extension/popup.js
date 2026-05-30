@@ -1,5 +1,10 @@
 const UI_STATE_KEY = "popupUiState";
 
+const CONFIG = {
+  BACKEND_URL: "https://minutz-backend.onrender.com",
+  DASHBOARD_URL: "https://minutz-dashboard.vercel.app",
+};
+
 document.addEventListener("DOMContentLoaded", () => {
 console.log("[Minutz Popup] JS loaded");
 
@@ -303,7 +308,7 @@ function renderHistoryRows(meetings) {
     row.appendChild(badge);
 
     const openMeeting = () => {
-      chrome.tabs.create({ url: `http://localhost:3000/dashboard/meeting/${meeting.id}` });
+      chrome.tabs.create({ url: `${CONFIG.DASHBOARD_URL}/dashboard/meeting/${meeting.id}` });
     };
 
     row.addEventListener("click", openMeeting);
@@ -324,7 +329,7 @@ async function loadHistory() {
   renderHistoryState("Loading recent meetings...", "");
 
   try {
-    const response = await fetch("http://localhost:8001/meetings");
+    const response = await fetch(`${CONFIG.BACKEND_URL}/meetings`);
     if (!response.ok) throw new Error("Could not load");
 
     const meetings = await response.json();
@@ -491,7 +496,7 @@ async function checkAuth() {  // Check cached storage first (fast)
   // No cache — call the dashboard API
   try {
     const res = await fetch(
-      'http://localhost:3000/api/auth/check',
+      `${CONFIG.DASHBOARD_URL}/api/auth/check`,
       { credentials: 'include', signal: AbortSignal.timeout(3000) }
     );
     const data = await res.json();
@@ -541,7 +546,7 @@ async function hydrateState() {
 
 async function onPrimaryClick() {
   if (uiState.status === "done") {
-    await chrome.tabs.create({ url: "http://localhost:3000/dashboard" });
+    await chrome.tabs.create({ url: `${CONFIG.DASHBOARD_URL}/dashboard` });
     return;
   }
 
@@ -630,7 +635,7 @@ async function onPrimaryClick() {
   if (signInBtn) {
     signInBtn.addEventListener("click", () => {
       console.log("[Minutz Popup] Button clicked:", "signInBtn");
-      chrome.tabs.create({ url: "http://localhost:3000/login" });
+      chrome.tabs.create({ url: `${CONFIG.DASHBOARD_URL}/login` });
     });
   }
 
@@ -645,14 +650,14 @@ async function onPrimaryClick() {
             showError(error?.message || "Failed to load extension");
           });
         } else {
-          showError("Not signed in yet. Make sure you are logged in at localhost:3000 then try again.");
+          showError(`Not signed in yet. Make sure you are logged in at ${CONFIG.DASHBOARD_URL} then try again.`);
         }
       });
     });
   }
 
   window.addEventListener("message", (event) => {
-    if (event.origin !== "http://localhost:3000") return;
+    if (event.origin !== CONFIG.DASHBOARD_URL) return;
     if (event.data?.type !== "MINUTZ_AUTH") return;
 
     const user = event.data?.user;
@@ -776,7 +781,7 @@ async function onPrimaryClick() {
   });
 
   document.getElementById('openDashboardBtn')?.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+    chrome.tabs.create({ url: `${CONFIG.DASHBOARD_URL}/dashboard` });
   });
 
   document.getElementById('signOutBtn')?.addEventListener('click', () => {

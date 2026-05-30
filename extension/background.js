@@ -1,7 +1,13 @@
 const CHUNK_MS = 10000;
 const OFFSCREEN_URL = "offscreen.html";
-const BACKEND_BASE = "http://localhost:8001";
 const BG_RUNTIME_VERSION = "minutz-bg-offscreen-v3";
+
+const CONFIG = {
+  BACKEND_URL: "https://minutz-backend.onrender.com",
+  DASHBOARD_URL: "https://minutz-dashboard.vercel.app",
+};
+
+const BACKEND_BASE = CONFIG.BACKEND_URL;
 
 console.log(BG_RUNTIME_VERSION);
 
