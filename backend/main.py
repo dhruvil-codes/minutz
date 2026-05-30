@@ -33,9 +33,16 @@ app = FastAPI(title="Minutz API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://minutz.vercel.app",
+        # Add your specific Vercel preview URL here when known
+        # FastAPI does exact matching — "https://*.vercel.app" won't work as a wildcard
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app|chrome-extension://.*",
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -165,6 +172,11 @@ async def startup_log():
     key = os.getenv("OPENAI_API_KEY", "")
     url = os.getenv("SUPABASE_URL", "")
     print(f"[startup] OPENAI_API_KEY: {key[:8]}... | SUPABASE_URL: {url}")
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        print(f"[startup] ffmpeg found at: {ffmpeg_path}")
+    else:
+        print("[startup] WARNING: ffmpeg not found — audio processing will fail")
 
 
 @app.get("/health")
