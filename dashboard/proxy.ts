@@ -1,16 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/", "/login", "/signup", "/auth/extension"];
-
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (pathname.startsWith("/api/extension/")) {
-    return NextResponse.next({ request });
-  }
-
-  let supabaseResponse = NextResponse.next({ request });
+export async function proxy(req: NextRequest) {
+  const res = NextResponse.next({
+    request: { headers: req.headers },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,13 +12,11 @@ export async function proxy(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll();
+          return req.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options);
+            res.cookies.set(name, value, options);
           });
         },
       },
@@ -32,16 +24,31 @@ export async function proxy(request: NextRequest) {
   );
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!user && !PUBLIC_ROUTES.includes(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  const pathname = req.nextUrl.pathname;
+  const isPublic =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/auth/extension";
+  const isApiExtension = pathname.startsWith("/api/extension");
+  const isApiAuth = pathname.startsWith("/api/auth");
+  const isStatic =
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    /\.(png|svg|ico|jpg|webp)$/.test(pathname);
+
+  if (isPublic || isApiExtension || isApiAuth || isStatic) {
+    return res;
   }
 
-  return supabaseResponse;
+  if (!session) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  return res;
 }
 
 export const config = {
