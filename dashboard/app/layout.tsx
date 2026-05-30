@@ -11,8 +11,12 @@ import { Providers } from "@/components/providers";
 const fontVariables = { "--font-inter": '"Inter", system-ui, sans-serif' } as CSSProperties;
 
 export const metadata: Metadata = {
-  title: "Minutz — AI Meeting Intelligence",
+  title: "Minutz - AI Meeting Intelligence",
   description: "Invisible AI meeting intelligence. 60 seconds to clarity.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-orange.png",
+  },
 };
 
 export const viewport: Viewport = {
