@@ -60,7 +60,7 @@ export default function ImportPage() {
       const finalizeRes = await fetch(`${BACKEND}/finalize/${sessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meeting_title: title.trim(), niche }),
+        body: JSON.stringify({ title: title.trim(), niche }),
       });
       if (!finalizeRes.ok) throw new Error("Finalize failed");
       const finalizeData = await finalizeRes.json();
@@ -71,8 +71,8 @@ export default function ImportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          session_id: finalizeData.session_id || sessionId,
-          meeting_title: title.trim(),
+          meeting_id: finalizeData.meeting_id,
+          transcript: finalizeData.transcript || "",
           niche,
         }),
       });
@@ -80,7 +80,7 @@ export default function ImportPage() {
       const summarizeData = await summarizeRes.json();
 
       setStage("done");
-      const meetingId = summarizeData.meeting_id || summarizeData.id || finalizeData.meeting_id;
+      const meetingId = summarizeData.meeting_id || finalizeData.meeting_id;
       if (meetingId) {
         router.push(`/dashboard/meeting/${meetingId}`);
       } else {
