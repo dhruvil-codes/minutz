@@ -383,8 +383,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const activeTab = tabs?.[0];
       const meetingTitle = String(message?.meeting_title || "").trim();
 
-      if (!activeTab?.id || !isMeetingUrl(activeTab.url)) {
-        sendResponse({ ok: false, error: "Open a supported meeting tab first" });
+      if (!activeTab?.id || !activeTab.url?.startsWith("http")) {
+        sendResponse({ ok: false, error: "Can't record this page. Open a website or meeting tab first." });
         return;
       }
 

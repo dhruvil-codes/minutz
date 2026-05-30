@@ -130,8 +130,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "rounded-lg transition-colors duration-150",
                       isActive
-                        ? "bg-[#1A1A1A]"
-                        : "hover:bg-[#1A1A1A]"
+                        ? "bg-[rgba(255,122,26,0.08)] border-l-2 border-[#FF7A1A]"
+                        : "hover:bg-[rgba(255,255,255,0.03)]"
                     )}
                   >
                     <SidebarLink

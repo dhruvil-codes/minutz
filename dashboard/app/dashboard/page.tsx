@@ -75,14 +75,8 @@ interface Stats {
   this_week: number;
 }
 
-function nicheVariant(niche: string) {
-  const map: Record<string, string> = {
-    sales: "border-blue-500/20 bg-blue-500/10 text-blue-400",
-    pm: "border-purple-500/20 bg-purple-500/10 text-purple-400",
-    financial: "border-green-500/20 bg-green-500/10 text-green-400",
-    general: "border-zinc-500/20 bg-zinc-500/10 text-zinc-400",
-  };
-  return map[niche] ?? map.general;
+function nicheVariant(_niche: string) {
+  return "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] text-[#A1A1AA]";
 }
 
 function nicheLabel(niche: string) {
@@ -92,12 +86,12 @@ function nicheLabel(niche: string) {
 
 function statusVariant(status: string) {
   const map: Record<string, string> = {
-    completed: "border-green-500/20 bg-green-500/10 text-green-400",
-    processing: "animate-pulse border-orange-500/20 bg-orange-500/10 text-orange-400",
-    pending: "border-yellow-500/20 bg-yellow-500/10 text-yellow-400",
-    failed: "border-red-500/20 bg-red-500/10 text-red-400",
+    completed: "border-[rgba(34,197,94,0.12)] bg-[rgba(34,197,94,0.08)] text-[#22C55E]",
+    processing: "animate-pulse border-[rgba(255,122,26,0.12)] bg-[rgba(255,122,26,0.08)] text-[#FF7A1A]",
+    pending: "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] text-[#A1A1AA]",
+    failed: "border-[rgba(239,68,68,0.12)] bg-[rgba(239,68,68,0.08)] text-[#EF4444]",
   };
-  return map[status] ?? "border-zinc-500/20 bg-zinc-500/10 text-zinc-400";
+  return map[status] ?? "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] text-[#A1A1AA]";
 }
 
 function statusLabel(status: string) {
@@ -124,28 +118,28 @@ function getGreeting() {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-            <Skeleton className="mb-3 h-3 w-24 bg-[#2A2A2A]" />
-            <Skeleton className="h-9 w-16 bg-[#2A2A2A]" />
-            <Skeleton className="mt-3 h-3 w-32 bg-[#2A2A2A]" />
+          <div key={i} className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6">
+            <Skeleton className="mb-3 h-3 w-24 bg-[rgba(255,255,255,0.06)]" />
+            <Skeleton className="h-10 w-16 bg-[rgba(255,255,255,0.06)]" />
+            <Skeleton className="mt-3 h-3 w-32 bg-[rgba(255,255,255,0.06)]" />
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-            <Skeleton className="mb-4 h-4 w-40 bg-[#2A2A2A]" />
-            <Skeleton className="h-52 w-full bg-[#2A2A2A]" />
+          <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6">
+            <Skeleton className="mb-4 h-4 w-40 bg-[rgba(255,255,255,0.06)]" />
+            <Skeleton className="h-52 w-full bg-[rgba(255,255,255,0.06)]" />
           </div>
         </div>
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-            <Skeleton className="mb-4 h-4 w-28 bg-[#2A2A2A]" />
+          <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6">
+            <Skeleton className="mb-4 h-4 w-28 bg-[rgba(255,255,255,0.06)]" />
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="mb-3 h-8 w-full bg-[#2A2A2A]" />
+              <Skeleton key={i} className="mb-3 h-8 w-full bg-[rgba(255,255,255,0.06)]" />
             ))}
           </div>
         </div>
@@ -173,7 +167,7 @@ export default function DashboardPage() {
 
   const fetchMeetings = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8001/meetings");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001"}/meetings`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data: Meeting[] = await res.json();
 
@@ -465,85 +459,74 @@ export default function DashboardPage() {
   const allNiches = useMemo(() => [...new Set(meetings.map((m) => m.niche || "general"))], [meetings]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 text-white">
+    <div className="mx-auto w-full max-w-7xl space-y-8 text-white">
       {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             {getGreeting()}, {displayName} 👋
           </h1>
-          <p className="mt-1 text-sm text-[#A3A3A3]">
+          <p className="mt-1 text-sm text-[#A1A1AA]">
             You processed {derived.completedThisWeek} meetings this week, generated {derived.totalActionItems} action items and achieved {derived.completionRate}% completion rate.
           </p>
           <div className="mt-2 flex items-center gap-2">
             <span className="inline-block size-1.5 rounded-full bg-[#22C55E]" />
-            <span className="text-xs text-[#A3A3A3]">
+            <span className="text-xs text-[#71717A]">
               {lastFetched ? (minutesAgo === 0 ? "Just updated" : `Last updated ${minutesAgo} min ago`) : "Loading..."}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div
-            className="flex h-9 w-52 cursor-text items-center gap-2 rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] px-3"
+            className="flex h-11 w-52 cursor-text items-center gap-2 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0F0F11] px-3 transition-all duration-200 focus-within:border-[rgba(255,255,255,0.12)]"
             onClick={() => document.getElementById("meeting-search")?.focus()}
           >
-            <Search className="size-3.5 shrink-0 text-[#6B6B6B]" />
-            <span className="flex-1 min-w-0 truncate text-sm text-[#6B6B6B] whitespace-nowrap">Search meetings...</span>
-            <span className="shrink-0 rounded border border-[#2A2A2A] px-1 text-[10px] text-[#6B6B6B]">Ctrl K</span>
+            <Search className="size-3.5 shrink-0 text-[#71717A]" />
+            <span className="flex-1 min-w-0 truncate text-sm text-[#71717A] whitespace-nowrap">Search meetings...</span>
+            <span className="shrink-0 rounded border border-[rgba(255,255,255,0.06)] px-1 text-[10px] text-[#71717A]">Ctrl K</span>
           </div>
 
           {/* Bell with notifications dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex size-9 items-center justify-center rounded-md text-[#A3A3A3] hover:bg-[#242424] hover:text-white">
-              <Bell className="size-[18px]" />
+            <DropdownMenuTrigger className="inline-flex size-9 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] text-[#A1A1AA] transition-all duration-200 hover:bg-[rgba(255,255,255,0.07)] hover:text-white">
+              <Bell className="size-[16px]" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 border-[#2A2A2A] bg-[#1A1A1A] text-white">
-              <div className="px-3 py-2 text-xs font-medium text-[#A3A3A3]">Notifications</div>
-              <DropdownMenuSeparator className="bg-[#2A2A2A]" />
+            <DropdownMenuContent align="end" className="w-72 border-[rgba(255,255,255,0.06)] bg-[#111113] text-white">
+              <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A]">Notifications</div>
+              <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.04)]" />
               {meetings.slice(0, 3).map((m) => (
                 <DropdownMenuItem
                   key={m.id}
                   onClick={() => router.push(`/dashboard/meeting/${m.id}`)}
-                  className="flex cursor-pointer flex-col items-start py-3 focus:bg-[#242424] focus:text-white"
+                  className="flex cursor-pointer flex-col items-start py-3 focus:bg-[rgba(255,255,255,0.04)] focus:text-white"
                 >
                   <span className="text-sm font-medium text-white">Meeting summary ready</span>
-                  <span className="mt-0.5 text-xs text-[#A3A3A3]">{m.title || "Untitled"}</span>
+                  <span className="mt-0.5 text-xs text-[#71717A]">{m.title || "Untitled"}</span>
                 </DropdownMenuItem>
               ))}
               {meetings.length === 0 && (
-                <div className="py-4 text-center text-xs text-[#A3A3A3]">No notifications yet</div>
+                <div className="py-4 text-center text-xs text-[#71717A]">No notifications yet</div>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Avatar with profile dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex size-8 items-center justify-center rounded-full border border-[#FF6A00]/30 bg-[#FF6A00]/20 text-sm font-semibold text-[#FF6A00] cursor-pointer">
+            <DropdownMenuTrigger className="flex size-8 items-center justify-center rounded-full border border-[rgba(255,122,26,0.3)] bg-[rgba(255,122,26,0.08)] text-sm font-semibold text-[#FF7A1A] cursor-pointer transition-all duration-200 hover:bg-[rgba(255,122,26,0.15)]">
               {avatarLetter}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 border-[#2A2A2A] bg-[#1A1A1A] text-white">
+            <DropdownMenuContent align="end" className="w-48 border-[rgba(255,255,255,0.06)] bg-[#111113] text-white">
               <div className="px-3 py-2">
                 <p className="text-sm font-medium text-white">{displayName}</p>
-                <p className="text-xs text-[#A3A3A3]">{userEmail}</p>
+                <p className="text-xs text-[#71717A]">{userEmail}</p>
               </div>
-              <DropdownMenuSeparator className="bg-[#2A2A2A]" />
+              <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.04)]" />
+              <DropdownMenuItem onClick={() => router.push("/dashboard/settings")} className="cursor-pointer text-[#A1A1AA] focus:bg-[rgba(255,255,255,0.04)] focus:text-white">Settings</DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.04)]" />
               <DropdownMenuItem
-                onClick={() => router.push("/dashboard/settings")}
-                className="cursor-pointer text-[#A3A3A3] focus:bg-[#242424] focus:text-white"
-              >
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[#2A2A2A]" />
-              <DropdownMenuItem
-                onClick={async () => {
-                  const supabase = createClient();
-                  await supabase.auth.signOut();
-                  router.push("/");
-                }}
-                className="cursor-pointer text-[#EF4444] focus:bg-[#242424] focus:text-[#EF4444]"
-              >
-                Sign out
-              </DropdownMenuItem>
+                onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); router.push("/"); }}
+                className="cursor-pointer text-[#EF4444] focus:bg-[rgba(255,255,255,0.04)] focus:text-[#EF4444]"
+              >Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -552,66 +535,46 @@ export default function DashboardPage() {
       {/* QUICK ACTIONS */}
       <div className="flex flex-wrap gap-3">
         <Dialog>
-          <DialogTrigger className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#2A2A2A] bg-[#1A1A1A] px-3 text-sm font-medium text-[#A3A3A3] hover:bg-[#242424] hover:text-white">
+          <DialogTrigger className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 text-sm font-medium text-[#A1A1AA] transition-all duration-200 hover:bg-[rgba(255,255,255,0.07)] hover:text-white">
             <Plus className="size-3.5" /> New Meeting
           </DialogTrigger>
-          <DialogContent className="max-w-md border-[#2A2A2A] bg-[#1A1A1A]">
+          <DialogContent className="max-w-md border-[rgba(255,255,255,0.06)] bg-[#111113]">
             <DialogHeader>
               <DialogTitle className="text-white">Start a new recording</DialogTitle>
-              <DialogDescription className="text-[#A3A3A3]">
-                Use the Minutz Chrome Extension to record your next meeting invisibly.
-              </DialogDescription>
+              <DialogDescription className="text-[#A1A1AA]">Use the Minutz Chrome Extension to record your next meeting invisibly.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               {[
-                {
-                  step: 1,
-                  title: "Install the Chrome Extension",
-                  body: <a href="https://github.com/dhruvil-codes/minutz" target="_blank" rel="noreferrer" className="text-[#FF6A00] hover:underline">Download from GitHub →</a>,
-                },
-                {
-                  step: 2,
-                  title: "Open your meeting",
-                  body: "Join Google Meet, Zoom, or Microsoft Teams in a new tab.",
-                },
-                {
-                  step: 3,
-                  title: "Click Start Recording",
-                  body: "Open the Minutz extension icon in your toolbar and hit Start Recording. Your summary will appear here automatically.",
-                },
+                { step: 1, title: "Install the Chrome Extension", body: <a href="https://github.com/dhruvil-codes/minutz" target="_blank" rel="noreferrer" className="text-[#FF7A1A] hover:underline">Download from GitHub →</a> },
+                { step: 2, title: "Open your meeting", body: "Join Google Meet, Zoom, or Microsoft Teams in a new tab." },
+                { step: 3, title: "Click Start Recording", body: "Open the Minutz extension icon in your toolbar and hit Start Recording. Your summary will appear here automatically." },
               ].map(({ step, title, body }) => (
                 <div key={step} className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-[#FF6A00]/20 bg-[#FF6A00]/10 text-xs font-bold text-[#FF6A00]">
-                    {step}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{title}</p>
-                    <p className="mt-0.5 text-xs text-[#A3A3A3]">{body}</p>
-                  </div>
+                  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-[rgba(255,122,26,0.2)] bg-[rgba(255,122,26,0.08)] text-xs font-bold text-[#FF7A1A]">{step}</div>
+                  <div><p className="text-sm font-medium text-white">{title}</p><p className="mt-0.5 text-xs text-[#A1A1AA]">{body}</p></div>
                 </div>
               ))}
             </div>
             <DialogFooter>
-              <DialogClose className="inline-flex h-9 items-center rounded-md border border-[#2A2A2A] bg-transparent px-4 text-sm font-medium text-[#A3A3A3] hover:bg-[#242424] hover:text-white">Close</DialogClose>
+              <DialogClose className="inline-flex h-9 items-center rounded-lg border border-[rgba(255,255,255,0.06)] bg-transparent px-4 text-sm font-medium text-[#A1A1AA] transition-all duration-200 hover:bg-[rgba(255,255,255,0.04)] hover:text-white">Close</DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/import")} className="border-[#2A2A2A] bg-[#1A1A1A] text-[#A3A3A3] hover:bg-[#242424] hover:text-white">
-          <Upload className="mr-2 size-3.5" /> Import Recording
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => toast.info("Generate Report coming soon")} className="border-[#2A2A2A] bg-[#1A1A1A] text-[#A3A3A3] hover:bg-[#242424] hover:text-white">
-          <FileText className="mr-2 size-3.5" /> Generate Report
-        </Button>
+        <button onClick={() => router.push("/dashboard/import")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 text-sm font-medium text-[#A1A1AA] transition-all duration-200 hover:bg-[rgba(255,255,255,0.07)] hover:text-white">
+          <Upload className="size-3.5" /> Import Recording
+        </button>
+        <button onClick={() => toast.info("Generate Report coming soon")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 text-sm font-medium text-[#A1A1AA] transition-all duration-200 hover:bg-[rgba(255,255,255,0.07)] hover:text-white">
+          <FileText className="size-3.5" /> Generate Report
+        </button>
       </div>
 
       {error && (
-        <Alert className="border-[#EF4444]/25 bg-[#EF4444]/10 text-red-200">
+        <Alert className="border-[rgba(239,68,68,0.12)] bg-[rgba(239,68,68,0.06)] text-red-200">
           <AlertCircle className="text-[#EF4444]" />
           <AlertTitle>Backend connection failed</AlertTitle>
           <AlertDescription className="text-red-200/80">
             We couldn&apos;t load meetings from the local API.
-            <Button variant="outline" size="sm" onClick={fetchMeetings} className="mt-2 border-[#EF4444]/30 bg-transparent text-red-100 hover:bg-[#EF4444]/10">
+            <Button variant="outline" size="sm" onClick={fetchMeetings} className="mt-2 border-[rgba(239,68,68,0.2)] bg-transparent text-red-100 hover:bg-[rgba(239,68,68,0.08)]">
               <RefreshCw className="mr-2 size-3.5" /> Retry
             </Button>
           </AlertDescription>
@@ -621,161 +584,90 @@ export default function DashboardPage() {
       {loading ? (
         <DashboardSkeleton />
       ) : meetings.length === 0 ? (
-        <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-16 text-center">
-          <VideoOff className="mx-auto size-12 text-[#6B6B6B]" />
+        <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-16 text-center">
+          <VideoOff className="mx-auto size-12 text-[#71717A]" />
           <h2 className="mt-4 text-xl font-semibold text-white">No meetings captured yet</h2>
-          <p className="mt-2 text-sm text-[#A3A3A3]">Start a meeting with the Chrome Extension and Minutz will turn it into a summary, action items, and decisions.</p>
-          <Button className="mt-6 bg-[#FF6A00] text-white hover:bg-[#E55E00]">
-            <Video className="mr-2 size-4" /> Open extension
-          </Button>
+          <p className="mt-2 text-sm text-[#A1A1AA]">Start a meeting with the Chrome Extension and Minutz will turn it into a summary, action items, and decisions.</p>
+          <button onClick={() => {}} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#FF7A1A] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#e86d10]">
+            <Video className="size-4" /> Open extension
+          </button>
         </div>
       ) : (
         <>
           {/* KPI CARDS */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            {/* Card 1 — Total Meetings */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B6B]">Total meetings</p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">{stats.total}</p>
+            {[
+              { label: "Total meetings", value: String(stats.total), icon: Video, sub: derived.weekTrend !== null ? `${derived.weekTrend >= 0 ? "↑" : "↓"} ${Math.abs(derived.weekTrend)}% vs last week` : "No prior week data", subColor: derived.weekTrend !== null ? (derived.weekTrend >= 0 ? "#22C55E" : "#EF4444") : "#71717A" },
+              { label: "Completion rate", value: `${derived.completionRate}%`, icon: CheckCircle2, sub: derived.completionRate === 100 ? "All meetings processed" : `${stats.completed} of ${stats.total} done`, subColor: "#71717A" },
+              { label: "Hours captured", value: derived.hoursCapured ? `${derived.hoursCapured}h` : "—", icon: Clock, sub: `${stats.this_week} meetings this week`, subColor: "#71717A" },
+              { label: "Action items", value: String(derived.totalActionItems), icon: ListChecks, sub: "Generated by AI", subColor: "#71717A", aiTag: true },
+              { label: "Meeting health", value: derived.statusCounts.failed === 0 ? "100%" : `${Math.round(((stats.total - derived.statusCounts.failed) / stats.total) * 100)}%`, icon: Activity, sub: derived.statusCounts.failed === 0 ? "No failures detected" : `${derived.statusCounts.failed} failed`, subColor: derived.statusCounts.failed === 0 ? "#22C55E" : "#EF4444" },
+            ].map(({ label, value, icon: Icon, sub, subColor, aiTag }) => (
+              <div key={label} className="group rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-all duration-200 hover:-translate-y-px hover:border-[rgba(255,255,255,0.10)]">
+                <div className="flex items-start justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A]">{label}</p>
+                  <div className="flex size-8 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)]">
+                    <Icon className="size-4 text-[#FF7A1A]" />
+                  </div>
                 </div>
-                <div className="flex size-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-black/30">
-                  <Video className="size-4 text-[#FF6A00]" />
-                </div>
+                <p className="mt-3 text-4xl font-bold tracking-tight text-white tabular-nums">{value}</p>
+                {aiTag ? (
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <span className="rounded bg-[rgba(255,122,26,0.08)] px-1.5 py-0.5 text-[10px] font-medium text-[#FF7A1A]">AI</span>
+                    <span className="text-xs text-[#71717A]">{sub}</span>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs font-medium" style={{ color: subColor }}>{sub}</p>
+                )}
               </div>
-              {derived.weekTrend !== null ? (
-                <p className={`mt-3 text-xs ${derived.weekTrend >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                  {derived.weekTrend >= 0 ? "↑" : "↓"} {Math.abs(derived.weekTrend)}% vs last week
-                </p>
-              ) : (
-                <p className="mt-3 text-xs text-[#6B6B6B]">No prior week data</p>
-              )}
-            </div>
-
-            {/* Card 2 — Completion Rate */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B6B]">Completion rate</p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">{derived.completionRate}%</p>
-                </div>
-                <div className="flex size-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-black/30">
-                  <CheckCircle2 className="size-4 text-[#22C55E]" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-[#6B6B6B]">
-                {derived.completionRate === 100 ? "All meetings processed" : `${stats.completed} of ${stats.total} done`}
-              </p>
-            </div>
-
-            {/* Card 3 — Hours Captured */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B6B]">Hours captured</p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
-                    {derived.hoursCapured ? `${derived.hoursCapured}h` : "—"}
-                  </p>
-                </div>
-                <div className="flex size-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-black/30">
-                  <Clock className="size-4 text-[#3B82F6]" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-[#6B6B6B]">{stats.this_week} meetings this week</p>
-            </div>
-
-            {/* Card 4 — Action Items */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B6B]">Action items</p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">{derived.totalActionItems}</p>
-                </div>
-                <div className="flex size-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-black/30">
-                  <ListChecks className="size-4 text-[#8B5CF6]" />
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1.5">
-                <span className="rounded bg-[#8B5CF6]/10 px-1.5 py-0.5 text-[10px] text-[#8B5CF6]">AI</span>
-                <span className="text-xs text-[#6B6B6B]">Generated by AI</span>
-              </div>
-            </div>
-
-            {/* Card 5 — Meeting Health */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B6B]">Meeting health</p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
-                    {derived.statusCounts.failed === 0 ? "100%" : `${Math.round(((stats.total - derived.statusCounts.failed) / stats.total) * 100)}%`}
-                  </p>
-                </div>
-                <div className="flex size-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-black/30">
-                  <Activity className="size-4 text-[#FF6A00]" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-[#22C55E]">
-                {derived.statusCounts.failed === 0 ? "No failures detected" : `${derived.statusCounts.failed} failed`}
-              </p>
-            </div>
+            ))}
           </div>
 
           {/* MIDDLE ROW */}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 xl:items-start">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start">
             {/* Chart */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] xl:col-span-1">
-              <div className="flex items-center justify-between px-5 pb-3 pt-4">
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] xl:col-span-1">
+              <div className="flex items-center justify-between px-6 pb-3 pt-5">
                 <div>
                   <p className="text-sm font-semibold text-white">Meeting Activity</p>
-                  <p className="mt-0.5 text-xs text-[#6B6B6B]">Captured sessions by day</p>
+                  <p className="mt-0.5 text-xs text-[#71717A]">Captured sessions by day</p>
                 </div>
-                <div className="flex items-center gap-1 rounded-lg bg-[#111111] p-1">
+                <div className="flex items-center gap-1 rounded-lg bg-[rgba(255,255,255,0.04)] p-1">
                   {(["7d", "30d", "90d"] as const).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setRange(r)}
-                      className={`rounded-md px-3 py-1 text-xs font-medium transition-all duration-200 ${
-                        range === r ? "bg-[#1A1A1A] text-white shadow-sm" : "text-[#6B6B6B] hover:text-white"
-                      }`}
-                    >
+                    <button key={r} onClick={() => setRange(r)}
+                      className={`rounded-md px-3 py-1 text-xs font-medium transition-all duration-200 ${range === r ? "bg-[rgba(255,255,255,0.08)] text-white" : "text-[#71717A] hover:text-white"}`}>
                       {r === "7d" ? "7D" : r === "30d" ? "30D" : "90D"}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="px-5 pb-4">
-                <div className="overflow-hidden rounded-lg border border-[#2A2A2A] bg-[#111111]">
+              <div className="px-6 pb-5">
+                <div className="overflow-hidden rounded-lg border border-[rgba(255,255,255,0.04)] bg-[#0A0A0C]">
                   <div className="w-full" style={{ height: 200 }}>
-                    <svg key={range} className="block h-[200px] w-full" viewBox="0 0 760 200" role="img"
-                      aria-label={`Meetings over last ${range}`} preserveAspectRatio="none">
+                    <svg key={range} className="block h-[200px] w-full" viewBox="0 0 760 200" role="img" aria-label={`Meetings over last ${range}`} preserveAspectRatio="none">
                       <defs>
                         <linearGradient id="minutzTrendArea" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="#FF6A00" stopOpacity="0.46" />
-                          <stop offset="55%" stopColor="#FF9B2F" stopOpacity="0.18" />
-                          <stop offset="100%" stopColor="#FF6A00" stopOpacity="0" />
+                          <stop offset="0%" stopColor="#FF7A1A" stopOpacity="0.15" />
+                          <stop offset="100%" stopColor="#FF7A1A" stopOpacity="0" />
                         </linearGradient>
                         <linearGradient id="minutzTrendLine" x1="0" x2="1" y1="0" y2="0">
-                          <stop offset="0%" stopColor="#FF6A00" />
-                          <stop offset="55%" stopColor="#FFB347" />
-                          <stop offset="100%" stopColor="#FF6A00" />
+                          <stop offset="0%" stopColor="#FF7A1A" />
+                          <stop offset="100%" stopColor="#FF7A1A" />
                         </linearGradient>
-                        <filter id="minutzTrendGlow" x="-20%" y="-60%" width="140%" height="220%">
-                          <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                        <filter id="minutzTrendGlow" x="-10%" y="-30%" width="120%" height="160%">
+                          <feGaussianBlur stdDeviation="2" result="coloredBlur" />
                           <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
                         </filter>
                       </defs>
                       {chart.gridLines.map((lineY) => (
-                        <line key={lineY} x1="34" x2="726" y1={lineY} y2={lineY} stroke="#2A2A2A" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line key={lineY} x1="34" x2="726" y1={lineY} y2={lineY} stroke="rgba(255,255,255,0.04)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                       ))}
                       <path d={chart.areaPath} fill="url(#minutzTrendArea)" />
-                      <path d={chart.linePath} fill="none" stroke="#31180b" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" vectorEffect="non-scaling-stroke" />
-                      <path d={chart.linePath} fill="none" stroke="url(#minutzTrendLine)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" filter="url(#minutzTrendGlow)" vectorEffect="non-scaling-stroke" />
+                      <path d={chart.linePath} fill="none" stroke="#FF7A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#minutzTrendGlow)" vectorEffect="non-scaling-stroke" />
                       {chart.points.map((point) => (
                         <g key={point.date}>
-                          <line x1={point.x} x2={point.x} y1={point.y} y2={chart.bottom} stroke={point.count > 0 ? "#3B2513" : "#2A2A2A"} strokeWidth="1" strokeDasharray={point.count > 0 ? "0" : "3 4"} opacity="0.8" vectorEffect="non-scaling-stroke" />
-                          <circle cx={point.x} cy={point.y} r="5" fill={point.count > 0 ? "#FF6A00" : "#2A2A2A"} stroke={point.count > 0 ? "#FFB347" : "#3A3A3A"} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                          <text x={point.x} y="190" textAnchor="middle" className="fill-[#6B6B6B] text-[10px] font-medium">{point.date}</text>
+                          <circle cx={point.x} cy={point.y} r="3.5" fill={point.count > 0 ? "#FF7A1A" : "rgba(255,255,255,0.08)"} stroke={point.count > 0 ? "rgba(255,122,26,0.3)" : "transparent"} strokeWidth="4" vectorEffect="non-scaling-stroke" />
+                          <text x={point.x} y="195" textAnchor="middle" fill="#71717A" fontSize="9">{point.date}</text>
                         </g>
                       ))}
                     </svg>
@@ -785,88 +677,93 @@ export default function DashboardPage() {
             </div>
 
             {/* AI Insights */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A]">
-              <div className="flex items-center justify-between px-5 py-4">
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113]">
+              <div className="flex items-center justify-between px-6 py-5">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-[#8B5CF6]" />
+                  <Sparkles className="size-4 text-[#FF7A1A]" />
                   <p className="text-sm font-semibold text-white">AI Insights</p>
                 </div>
-                <ChevronRight className="size-4 text-[#A3A3A3]" />
+                <ChevronRight className="size-4 text-[#71717A]" />
               </div>
-              <div className="px-5 pb-4">
+              <div className="px-6 pb-5">
                 {[
-                  { color: "#FF6A00", text: `Sales meetings: ${derived.salesThisWeek} this week` },
-                  { color: "#8B5CF6", text: `${derived.totalActionItems} action items generated` },
-                  { color: "#22C55E", text: derived.statusCounts.failed === 0 ? "No failed recordings. Great job!" : `${derived.statusCounts.failed} failed recordings` },
-                  { color: "#FF6A00", text: `Top niche: ${nicheLabel(derived.topNiche)} (${derived.topNichePercent}%)` },
-                ].map((item, i, arr) => (
-                  <div key={i} className={`flex items-start gap-3 py-2 ${i < arr.length - 1 ? "border-b border-[#2A2A2A]" : ""}`}>
-                    <span className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                    <p className="text-sm text-[#A3A3A3]">{item.text}</p>
+                  `Sales meetings: ${derived.salesThisWeek} this week`,
+                  `${derived.totalActionItems} action items generated`,
+                  derived.statusCounts.failed === 0 ? "No failed recordings. Great job!" : `${derived.statusCounts.failed} failed recordings`,
+                  `Top niche: ${nicheLabel(derived.topNiche)} (${derived.topNichePercent}%)`,
+                ].map((text, i, arr) => (
+                  <div key={i} className={`flex items-start gap-3 py-3 ${i < arr.length - 1 ? "border-b border-[rgba(255,255,255,0.04)]" : ""}`}>
+                    <span className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-[#71717A]" />
+                    <p className="text-sm text-[#A1A1AA]">{text}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A]">
-              <div className="flex items-center justify-between px-5 py-4">
+            {/* Recent Activity — timeline */}
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113]">
+              <div className="flex items-center justify-between px-6 py-5">
                 <p className="text-sm font-semibold text-white">Recent Activity</p>
-                <button onClick={() => router.push("/dashboard/meetings")} className="text-xs text-[#FF6A00] hover:underline">View all</button>
+                <button onClick={() => router.push("/dashboard/meetings")} className="text-xs text-[#FF7A1A] transition-colors hover:underline">View all</button>
               </div>
-              <div className="px-5 pb-4">
+              <div className="relative px-6 pb-5">
                 {derived.recentEvents.length === 0 ? (
-                  <p className="text-sm text-[#6B6B6B]">No recent activity</p>
+                  <p className="text-sm text-[#71717A]">No recent activity</p>
                 ) : (
-                  derived.recentEvents.map((ev, i) => (
-                    <div key={i} className="flex items-start gap-3 py-2">
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FF6A00]/10">
-                        <ev.icon className="size-3 text-[#FF6A00]" />
+                  <div className="relative">
+                    <div className="absolute left-[5px] top-2 bottom-2 w-px bg-[rgba(255,255,255,0.06)]" />
+                    {derived.recentEvents.map((ev, i) => (
+                      <div key={i} className="relative flex items-start gap-4 pb-4 last:pb-0">
+                        <span className={`relative z-10 mt-1 inline-block size-[11px] shrink-0 rounded-full border-2 ${i === 0 ? "border-[#FF7A1A] bg-[#FF7A1A]" : "border-[#71717A] bg-[#111113]"}`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white">{ev.event}</p>
+                          <p className="truncate text-xs text-[#71717A]">{ev.subtitle}</p>
+                        </div>
+                        <span className="shrink-0 text-xs text-[#71717A]">{ev.time}</span>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm text-white">{ev.event}</p>
-                        <p className="truncate text-xs text-[#6B6B6B]">{ev.subtitle}</p>
-                      </div>
-                      <span className="ml-auto shrink-0 text-xs text-[#6B6B6B]">{ev.time}</span>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
           {/* NICHE BREAKDOWN + STATUS DISTRIBUTION */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Niche Breakdown */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <p className="mb-4 text-sm font-semibold text-white">Niche Breakdown</p>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6">
+              <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A]">Niche Breakdown</p>
               {derived.nicheBreakdown.length === 0 ? (
-                <p className="text-sm text-[#6B6B6B]">No data yet</p>
+                <p className="text-sm text-[#71717A]">No data yet</p>
               ) : (
                 derived.nicheBreakdown.map((item, i, arr) => (
-                  <div key={item.niche} className={`py-3 ${i < arr.length - 1 ? "border-b border-[#2A2A2A]" : ""}`}>
+                  <div key={item.niche} className={`py-3 ${i < arr.length - 1 ? "border-b border-[rgba(255,255,255,0.04)]" : ""}`}>
                     <div className="mb-2 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className={nicheVariant(item.niche)}>{nicheLabel(item.niche)}</Badge>
-                        <span className="text-xs text-[#A3A3A3]">{item.count} meeting{item.count !== 1 ? "s" : ""}</span>
+                        <span className="text-xs text-[#71717A]">{item.count} meeting{item.count !== 1 ? "s" : ""}</span>
                       </div>
-                      <span className="text-xs text-[#A3A3A3]">{item.percent}%</span>
+                      <span className="text-xs font-medium text-[#A1A1AA]">{item.percent}%</span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-[#2A2A2A]">
-                      <div className="h-1.5 rounded-full bg-[#FF6A00]" style={{ width: `${item.percent}%` }} />
+                    <div className="h-1 w-full rounded-full bg-[#1A1A1D]">
+                      <div className="h-1 rounded-full bg-[#FF7A1A] transition-all duration-500" style={{ width: `${item.percent}%` }} />
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Status Distribution */}
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-              <p className="mb-4 text-sm font-semibold text-white">Status Distribution</p>
+            <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6">
+              <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A]">Status Distribution</p>
+              <div className="mb-6 text-center">
+                <p className="text-5xl font-bold tracking-tight text-white">
+                  {stats.total ? `${Math.round(((stats.total - derived.statusCounts.failed) / stats.total) * 100)}%` : "—"}
+                </p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A]">Completion Rate</p>
+              </div>
               <div className="space-y-3">
                 {[
                   { key: "Completed", count: derived.statusCounts.completed, color: "#22C55E", bar: "bg-[#22C55E]" },
-                  { key: "Processing", count: derived.statusCounts.processing, color: "#FF6A00", bar: "animate-pulse bg-[#FF6A00]" },
+                  { key: "Processing", count: derived.statusCounts.processing, color: "#FF7A1A", bar: "animate-pulse bg-[#FF7A1A]" },
                   { key: "Failed", count: derived.statusCounts.failed, color: "#EF4444", bar: "bg-[#EF4444]" },
                 ].map((item) => {
                   const pct = stats.total ? Math.round((item.count / stats.total) * 100) : 0;
@@ -874,148 +771,132 @@ export default function DashboardPage() {
                     <div key={item.key}>
                       <div className="mb-1.5 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <span className="inline-block size-2 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-[#A3A3A3]">{item.key}</span>
+                          <span className="inline-block size-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-[#A1A1AA]">{item.key}</span>
                         </div>
-                        <span className="font-semibold text-white">{item.count} · {pct}%</span>
+                        <span className="font-medium text-white">{item.count} · {pct}%</span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-[#2A2A2A]">
-                        <div className={`h-1.5 rounded-full ${item.bar}`} style={{ width: `${pct}%` }} />
+                      <div className="h-1 w-full rounded-full bg-[#1A1A1D]">
+                        <div className={`h-1 rounded-full transition-all duration-500 ${item.bar}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-6 border-t border-[#2A2A2A] pt-4">
-                <p className="text-xs text-[#6B6B6B]">Success Rate</p>
-                <p className="mt-1 text-3xl font-bold text-white">
-                  {stats.total ? `${Math.round(((stats.total - derived.statusCounts.failed) / stats.total) * 100)}%` : "—"}
-                </p>
-                <p className="mt-1 text-xs text-[#A3A3A3]">↑ 0% vs last week</p>
-              </div>
             </div>
           </div>
 
           {/* RECENT MEETINGS TABLE */}
-          <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] overflow-hidden">
-            <div className="flex items-center justify-between border-b border-[#2A2A2A] px-6 py-4">
+          <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111113]">
+            <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.04)] px-6 py-5">
               <div>
                 <p className="text-sm font-semibold text-white">Recent Meetings</p>
-                <p className="mt-0.5 text-xs text-[#6B6B6B]">Click a row to inspect summary, actions, and transcript.</p>
+                <p className="mt-0.5 text-xs text-[#71717A]">Click a row to inspect summary, actions, and transcript.</p>
               </div>
-              <Badge variant="outline" className="border-white/10 bg-white/5 text-[#A3A3A3]">{meetings.length} total</Badge>
+              <span className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-2.5 py-1 text-xs text-[#A1A1AA]">{meetings.length} total</span>
             </div>
 
             {/* Filter bar */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-[#2A2A2A] px-6 py-3">
-              <div className="flex items-center gap-2 rounded-lg border border-[#2A2A2A] bg-[#111111] px-3 py-1.5">
-                <Search className="size-3.5 text-[#6B6B6B]" />
+            <div className="flex flex-wrap items-center gap-2 border-b border-[rgba(255,255,255,0.04)] px-6 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0F0F11] px-3 py-2 backdrop-blur-[10px] transition-all duration-200 focus-within:border-[rgba(255,255,255,0.12)]">
+                <Search className="size-3.5 text-[#71717A]" />
                 <input
                   id="meeting-search"
                   type="text"
                   placeholder="Search meetings..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-44 bg-transparent text-sm text-white placeholder-[#6B6B6B] outline-none"
+                  className="w-44 bg-transparent text-sm text-white placeholder-[#71717A] outline-none"
                 />
               </div>
               {(["all", "completed", "processing", "failed"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                <button key={s} onClick={() => setStatusFilter(s)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
                     statusFilter === s
-                      ? "border-[#FF6A00]/20 bg-[#FF6A00]/10 text-[#FF6A00]"
-                      : "border-[#2A2A2A] bg-[#1A1A1A] text-[#A3A3A3] hover:text-white"
-                  }`}
-                >
+                      ? "border-[rgba(255,122,26,0.2)] bg-[rgba(255,122,26,0.08)] text-[#FF7A1A]"
+                      : "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] text-[#A1A1AA] hover:text-white"
+                  }`}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] px-3 py-1.5 text-xs text-[#A3A3A3] hover:text-white">
+                <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-xs text-[#A1A1AA] transition-all duration-200 hover:text-white">
                   {nicheFilter === "all" ? "All Niches" : nicheLabel(nicheFilter)}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="border-[#2A2A2A] bg-[#1A1A1A] text-white">
-                  <DropdownMenuItem onClick={() => setNicheFilter("all")} className="text-[#A3A3A3] hover:text-white focus:bg-[#242424] focus:text-white">All Niches</DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#2A2A2A]" />
+                <DropdownMenuContent className="border-[rgba(255,255,255,0.06)] bg-[#111113] text-white">
+                  <DropdownMenuItem onClick={() => setNicheFilter("all")} className="text-[#A1A1AA] focus:bg-[rgba(255,255,255,0.04)] focus:text-white">All Niches</DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.04)]" />
                   {allNiches.map((n) => (
-                    <DropdownMenuItem key={n} onClick={() => setNicheFilter(n)} className="text-[#A3A3A3] hover:text-white focus:bg-[#242424] focus:text-white">{nicheLabel(n)}</DropdownMenuItem>
+                    <DropdownMenuItem key={n} onClick={() => setNicheFilter(n)} className="text-[#A1A1AA] focus:bg-[rgba(255,255,255,0.04)] focus:text-white">{nicheLabel(n)}</DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button className="flex items-center gap-1.5 rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] px-3 py-1.5 text-xs text-[#A3A3A3] hover:text-white">
+              <button className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-xs text-[#A1A1AA] transition-all duration-200 hover:text-white">
                 <SlidersHorizontal className="size-3.5" /> Filters
               </button>
             </div>
 
             <Table className="min-w-[760px]">
               <TableHeader>
-                <TableRow className="border-b border-[#2A2A2A] hover:bg-transparent">
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Title</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Niche</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Duration</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Action Items</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Status</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Date</TableHead>
-                  <TableHead className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Actions</TableHead>
+                <TableRow className="border-b border-[rgba(255,255,255,0.04)] hover:bg-transparent">
+                  {["Title", "Niche", "Duration", "Action Items", "Status", "Date", ""].map((h) => (
+                    <TableHead key={h} className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717A] ${h === "" ? "text-right" : ""}`}>{h}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMeetings.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="py-16 text-center">
-                      <VideoOff className="mx-auto size-10 text-[#6B6B6B]" />
+                      <VideoOff className="mx-auto size-10 text-[#71717A]" />
                       <p className="mt-3 text-sm font-medium text-white">No meetings yet</p>
-                      <p className="mt-1 text-xs text-[#A3A3A3]">Install the Chrome Extension to start recording</p>
+                      <p className="mt-1 text-xs text-[#71717A]">Install the Chrome Extension to start recording</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredMeetings.map((meeting) => (
                     <TableRow
                       key={meeting.id}
-                      className="group cursor-pointer border-b border-[#2A2A2A]/50 transition-colors duration-150 last:border-0 hover:bg-[#1A1A1A]"
+                      className="group cursor-pointer border-b border-[rgba(255,255,255,0.03)] transition-colors duration-200 last:border-0 hover:bg-[rgba(255,255,255,0.02)]"
                       onClick={() => router.push(`/dashboard/meeting/${meeting.id}`)}
                     >
                       <TableCell className="px-4 py-4">
                         <span className="flex items-center gap-2 text-sm font-medium text-white">
-                          <Video className="size-[14px] shrink-0 text-[#FF6A00]" />
+                          <Video className="size-[14px] shrink-0 text-[#FF7A1A]" />
                           {meeting.title || "Untitled"}
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <Badge variant="outline" className={nicheVariant(meeting.niche)}>{nicheLabel(meeting.niche || "general")}</Badge>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-[#A3A3A3]">
+                      <TableCell className="px-4 py-4 text-sm text-[#71717A]">
                         {meeting.duration_seconds ? `${Math.round(meeting.duration_seconds / 60)} min` : "—"}
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-[#A3A3A3]">
-                        {meeting.status === "completed" ? `${3}` : "—"}
+                      <TableCell className="px-4 py-4 text-sm text-[#71717A]">
+                        {meeting.status === "completed" ? "3" : "—"}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <Badge variant="outline" className={statusVariant(meeting.status)}>{statusLabel(meeting.status)}</Badge>
                       </TableCell>
-                      <TableCell className="px-4 py-4 text-sm text-[#A3A3A3]">
+                      <TableCell className="px-4 py-4 text-sm text-[#71717A]">
                         {new Date(meeting.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                         {" · "}
                         {new Date(meeting.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </TableCell>
                       <TableCell className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#242424]">
-                            <MoreHorizontal className="size-4 text-[#A3A3A3]" />
+                          <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.06)] opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-[rgba(255,255,255,0.04)]">
+                            <MoreHorizontal className="size-4 text-[#A1A1AA]" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-[#2A2A2A] bg-[#1A1A1A] text-white">
-                            <DropdownMenuItem onClick={() => router.push(`/dashboard/meeting/${meeting.id}`)} className="text-[#A3A3A3] focus:bg-[#242424] focus:text-white">
+                          <DropdownMenuContent align="end" className="border-[rgba(255,255,255,0.06)] bg-[#111113] text-white">
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/meeting/${meeting.id}`)} className="text-[#A1A1AA] focus:bg-[rgba(255,255,255,0.04)] focus:text-white">
                               <ArrowUpRight className="mr-2 size-3.5" /> View Summary
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(meeting.id); toast("Meeting ID copied"); }} className="text-[#A3A3A3] focus:bg-[#242424] focus:text-white">
+                            <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(meeting.id); toast("Meeting ID copied"); }} className="text-[#A1A1AA] focus:bg-[rgba(255,255,255,0.04)] focus:text-white">
                               Copy meeting ID
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-[#2A2A2A]" />
-                            <DropdownMenuItem className="text-[#EF4444] focus:bg-[#242424] focus:text-[#EF4444]">
-                              Delete
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.04)]" />
+                            <DropdownMenuItem className="text-[#EF4444] focus:bg-[rgba(255,255,255,0.04)] focus:text-[#EF4444]">Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -1024,10 +905,8 @@ export default function DashboardPage() {
                 )}
               </TableBody>
             </Table>
-            <div className="border-t border-[#2A2A2A] px-6 py-3">
-              <p className="text-xs text-[#A3A3A3]">
-                Showing {Math.min(filteredMeetings.length, filteredMeetings.length)} of {meetings.length} meetings
-              </p>
+            <div className="border-t border-[rgba(255,255,255,0.04)] px-6 py-3">
+              <p className="text-xs text-[#71717A]">Showing {filteredMeetings.length} of {meetings.length} meetings</p>
             </div>
           </div>
         </>

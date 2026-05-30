@@ -1,17 +1,30 @@
 let recorder = null;
 let stream = null;
 let sessionId = null;
+let audioContext = null;
+let micStream = null;
 
 function clearRecorder() {
+  if (recorder && recorder.state !== "inactive") {
+    try { recorder.stop(); } catch (_) {}
+  }
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
+  }
+  if (micStream) {
+    micStream.getTracks().forEach((track) => track.stop());
+    micStream = null;
+  }
+  if (audioContext) {
+    audioContext.close().catch(() => {});
+    audioContext = null;
   }
   recorder = null;
   stream = null;
   sessionId = null;
 }
 
-async function createStream(streamId) {
+async function createTabStream(streamId) {
   return navigator.mediaDevices.getUserMedia({
     audio: {
       mandatory: {
@@ -23,15 +36,58 @@ async function createStream(streamId) {
   });
 }
 
+async function createMixedStream(streamId) {
+  const tabStream = await createTabStream(streamId);
+
+  try {
+    const mic = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 16000
+      },
+      video: false
+    });
+
+    // Mix tab + mic via Web Audio API
+    const ctx = new AudioContext();
+    audioContext = ctx;
+    micStream = mic;
+
+    const destination = ctx.createMediaStreamDestination();
+    ctx.createMediaStreamSource(tabStream).connect(destination);
+    ctx.createMediaStreamSource(mic).connect(destination);
+
+    // Keep tab stream reference for cleanup
+    stream = tabStream;
+
+    chrome.runtime.sendMessage({ type: "micStatus", hasMic: true }, () => {
+      void chrome.runtime.lastError;
+    });
+
+    return destination.stream;
+  } catch (err) {
+    // Mic denied or unavailable — fall back to tab-only
+    console.warn("[Minutz Offscreen] Mic unavailable, using tab-only:", err.message);
+    stream = tabStream;
+
+    chrome.runtime.sendMessage({ type: "micStatus", hasMic: false, reason: err.name }, () => {
+      void chrome.runtime.lastError;
+    });
+
+    return tabStream;
+  }
+}
+
 async function startRecorder({ streamId, chunkMs, nextSessionId }) {
   if (recorder && recorder.state !== "inactive") {
     throw new Error("Recorder already running");
   }
 
-  stream = await createStream(streamId);
+  const recordStream = await createMixedStream(streamId);
   sessionId = nextSessionId;
 
-  recorder = new MediaRecorder(stream, {
+  recorder = new MediaRecorder(recordStream, {
     mimeType: "audio/webm;codecs=opus"
   });
 
@@ -79,7 +135,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
     }
 
-    // Override onstop to respond only after the final ondataavailable has fired
     recorder.onstop = () => {
       chrome.runtime.sendMessage({
         type: "offscreenStopped",
@@ -90,13 +145,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     };
 
     try {
-      recorder.requestData(); // flush any buffered audio before stop
+      recorder.requestData();
       recorder.stop();
     } catch (error) {
       clearRecorder();
       sendResponse({ ok: false, error: error?.message || "Failed to stop recorder" });
     }
-    return true; // async response — sendResponse called from onstop
+    return true;
   }
 
   return false;

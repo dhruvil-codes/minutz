@@ -33,9 +33,12 @@ let uiState = {
 };
 
 function providerFromUrl(url) {
-  if (/^https?:\/\/[^/]*\.zoom\.us\//i.test(url || "")) return "Zoom";
-  if (/^https?:\/\/meet\.google\.com\//i.test(url || "")) return "Google Meet";
-  if (/^https?:\/\/[^/]*\.teams\.microsoft\.com\//i.test(url || "")) return "Teams";
+  if (!url) return null;
+  if (url.includes("meet.google.com/")) return "Google Meet";
+  if (url.includes("zoom.us/j/") || url.includes("zoom.us/wc/")) return "Zoom";
+  if (url.includes("teams.microsoft.com") && url.includes("meetup-join")) return "Microsoft Teams";
+  if (url.includes("youtube.com/watch")) return "YouTube";
+  if (url.startsWith("http")) return "This tab";
   return null;
 }
 
@@ -65,12 +68,41 @@ function formatElapsed(startedAt) {
 }
 
 function renderBadge() {
+  const detectionBanner = document.getElementById("detectionBanner");
+  const detectionDot = document.getElementById("detectionDot");
+  const detectionText = document.getElementById("detectionText");
+
   if (uiState.meetingDetected && uiState.meetingProvider) {
-    meetingBadge.className = "pill detected";
-    meetingBadge.textContent = `${uiState.meetingProvider} detected`;
+    const platformLabels = {
+      "Google Meet": "⚡ Google Meet detected",
+      "Zoom": "⚡ Zoom detected",
+      "Microsoft Teams": "⚡ Teams detected",
+      "YouTube": "▶ YouTube — ready to record",
+      "This tab": "⚡ Ready to record this tab",
+    };
+    const label = platformLabels[uiState.meetingProvider] || `⚡ ${uiState.meetingProvider} detected`;
+
+    if (detectionBanner) detectionBanner.classList.add("active");
+    if (detectionDot) detectionDot.style.background = "#FF6A00";
+    if (detectionText) {
+      detectionText.textContent = label;
+      detectionText.style.color = "#FFFFFF";
+    }
+    if (meetingBadge) {
+      meetingBadge.className = "pill detected";
+      meetingBadge.textContent = label;
+    }
   } else {
-    meetingBadge.className = "pill idle";
-    meetingBadge.textContent = "Open a meeting to start";
+    if (detectionBanner) detectionBanner.classList.remove("active");
+    if (detectionDot) detectionDot.style.background = "";
+    if (detectionText) {
+      detectionText.textContent = "Open a tab to start recording";
+      detectionText.style.color = "";
+    }
+    if (meetingBadge) {
+      meetingBadge.className = "pill idle";
+      meetingBadge.textContent = "Open a tab to start recording";
+    }
   }
 }
 
@@ -322,7 +354,6 @@ function renderButton() {
     primaryBtn.disabled = !uiState.meetingDetected;
     return;
   }
-
   if (uiState.status === "recording") {
     primaryBtn.classList.add("stop");
     primaryBtn.textContent = "⏹ Stop Recording";
@@ -441,8 +472,15 @@ async function detectMeetingTab() {
   });
 }
 
-async function checkAuth() {
-  // Check cached storage first (fast)
+function populateUserSection(user) {
+  if (!user) return;
+  const avatar = document.getElementById("userAvatar");
+  const email = document.getElementById("userEmail");
+  if (avatar) avatar.textContent = user.email.charAt(0).toUpperCase();
+  if (email) email.textContent = user.email;
+}
+
+async function checkAuth() {  // Check cached storage first (fast)
   const cached = await new Promise(resolve => {
     chrome.storage.local.get(['minutz_user'], result => {
       resolve(result.minutz_user || null);
@@ -474,6 +512,7 @@ async function hydrateState() {
   }
 
   showMainUi();
+  populateUserSection(user);
 
   const [storedUi, bgState] = await Promise.all([
     chrome.storage.local.get([UI_STATE_KEY]),
@@ -660,6 +699,18 @@ async function onPrimaryClick() {
   }
 
   chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "micStatus") {
+      if (uiState.status === "recording") {
+        if (message.hasMic) {
+          if (statusText) statusText.textContent = `Recording... 🎤 Mic + Tab audio`;
+        } else {
+          if (statusText) statusText.textContent = `Recording... (tab audio only)`;
+          if (statusSubtext) statusSubtext.textContent = "Mic access denied — recording tab audio only";
+        }
+      }
+      return;
+    }
+
     if (message?.type === "STATUS_UPDATE") {
       pipelineStage = message.status || null;
 
@@ -714,7 +765,43 @@ async function onPrimaryClick() {
     }
   });
 
+  // Restore saved status
+  chrome.storage.local.get(['minutz_status'], (result) => {
+    const select = document.getElementById('userStatus');
+    if (select) select.value = result.minutz_status || 'available';
+  });
+
+  document.getElementById('userStatus')?.addEventListener('change', (e) => {
+    chrome.storage.local.set({ minutz_status: e.target.value });
+  });
+
+  document.getElementById('openDashboardBtn')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+  });
+
+  document.getElementById('signOutBtn')?.addEventListener('click', () => {
+    chrome.storage.local.remove(['minutz_user', 'minutz_status'], () => {
+      showAuthScreen();
+    });
+  });
+
   hydrateState().catch((error) => {
     setStatusCard(error?.message || "Failed to initialize", "", "idle");
+  });
+
+  // Poll for meeting detection every 2s while popup is open
+  const detectionInterval = setInterval(async () => {
+    if (uiState.status === "idle") {
+      await detectMeetingTab();
+    }
+  }, 2000);
+
+  // Also re-detect when user switches tabs
+  chrome.tabs.onActivated.addListener(() => {
+    detectMeetingTab().catch(() => {});
+  });
+
+  window.addEventListener("unload", () => {
+    clearInterval(detectionInterval);
   });
 });

@@ -53,7 +53,7 @@ export default function MeetingsPage() {
 
   const fetchMeetings = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8001/meetings");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001"}/meetings`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data: Meeting[] = await res.json();
       const sorted = [...data].sort(

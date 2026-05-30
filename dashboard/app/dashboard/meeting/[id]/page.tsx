@@ -247,7 +247,7 @@ export default function MeetingDetailPage() {
 
   const fetchFull = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:8001/meeting/${id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001"}/meeting/${id}`);
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new Error(`${res.status}: ${body || "Unknown error"}`);
@@ -270,7 +270,7 @@ export default function MeetingDetailPage() {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:8001/meeting/${id}/status`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001"}/meeting/${id}/status`);
         if (!res.ok) return;
         const { status } = await res.json();
         if (status === "completed" || status === "failed") {

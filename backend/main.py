@@ -92,6 +92,31 @@ def _transcribe_file(path: Path) -> str:
         )
 
 
+HALLUCINATION_PHRASES = [
+    "you", "thank you", "thanks for watching", "thanks for listening",
+    "bye", "goodbye", "see you", "see you next time",
+    "please subscribe", "like and subscribe", "subtitles by",
+    "transcribed by", "translation by", "www.", ".com",
+    "this is a business meeting recording",
+    "the audio contains professional conversation",
+]
+
+
+def is_hallucinated_transcript(transcript: str) -> bool:
+    cleaned = transcript.strip().lower()
+    word_count = len(cleaned.split())
+    if "this is a business meeting recording" in cleaned:
+        return True
+    if word_count < 10:
+        unique_words = set(cleaned.split())
+        if len(unique_words) <= 2:
+            return True
+        for phrase in HALLUCINATION_PHRASES:
+            if cleaned == phrase or cleaned.replace(" ", "") == phrase.replace(" ", ""):
+                return True
+    return False
+
+
 def _merge_overlap(a: str, b: str) -> str:
     """Remove duplicated sentences at the seam between two transcript chunks."""
     a_sentences = [s.strip() for s in a.split(".") if s.strip()]
@@ -264,6 +289,11 @@ async def finalize(session_id: str, body: FinalizeBody):
             traceback.print_exc()
             raise HTTPException(status_code=502, detail=f"Transcription failed: {e}")
 
+        # --- Hallucination filter ---
+        if is_hallucinated_transcript(transcript_text):
+            print(f"[finalize] hallucination detected, clearing transcript: {repr(transcript_text[:80])}")
+            transcript_text = ""
+
         # --- Step 3: Cost estimate ---
         token_count = _count_tokens(transcript_text)
         cost = estimate_processing_cost(duration_seconds, token_count)
@@ -362,22 +392,24 @@ def _summarize_token_aware(system_prompt: str, transcript: str) -> dict[str, Any
 async def summarize(body: SummarizeBody):
     niche = body.niche if body.niche in PROMPTS else "general"
 
-    # Short transcript guard — skip GPT-4o and return sensible defaults
-    word_count = len(body.transcript.split())
-    if len(body.transcript.strip()) < 50 or word_count < 10:
-        print(f"[summarize] transcript too short ({len(body.transcript)} chars, {word_count} words), skipping GPT")
-        base_data = {
-            "executive_summary": "Recording too short to summarize. Please record at least 30 seconds of speech.",
-            "action_items": [],
-            "decisions": [],
-            "follow_ups": [],
-            "sentiment": "neutral",
-            "urgency": "low",
-        }
+    # Short transcript guard
+    word_count = len(body.transcript.strip().split()) if body.transcript.strip() else 0
+
+    if not body.transcript.strip() or word_count < 8:
+        if not body.transcript.strip() or word_count == 0:
+            message = "No speech detected in this recording. Make sure your microphone is working and you are speaking clearly during the meeting."
+        else:
+            message = f"Recording too short to summarize ({word_count} words detected). Please speak for at least 30 seconds with clear audio."
+        print(f"[summarize] transcript too short ({word_count} words), skipping GPT: {message}")
         try:
             supabase.table("summaries").upsert({
                 "meeting_id": body.meeting_id,
-                **base_data,
+                "executive_summary": message,
+                "action_items": [],
+                "decisions": [],
+                "follow_ups": [],
+                "sentiment": "neutral",
+                "urgency": "low",
                 "niche_data": {},
             }).execute()
             supabase.table("meetings").update({"status": "completed"}).eq(
@@ -385,7 +417,17 @@ async def summarize(body: SummarizeBody):
             ).execute()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Database error: {e}")
-        return {**base_data, "niche_data": {}, "meeting_id": body.meeting_id, "short_transcript": True}
+        return {
+            "meeting_id": body.meeting_id,
+            "executive_summary": message,
+            "action_items": [],
+            "decisions": [],
+            "follow_ups": [],
+            "sentiment": "neutral",
+            "urgency": "low",
+            "niche_data": {},
+            "short_transcript": True,
+        }
 
     system_prompt = PROMPTS[niche]
     try:

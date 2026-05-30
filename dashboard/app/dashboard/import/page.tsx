@@ -48,7 +48,8 @@ export default function ImportPage() {
       formData.append("chunk_index", "0");
       formData.append("total_chunks", "1");
 
-      const uploadRes = await fetch("http://localhost:8001/upload-chunk", {
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001";
+      const uploadRes = await fetch(`${BACKEND}/upload-chunk`, {
         method: "POST",
         body: formData,
       });
@@ -56,7 +57,7 @@ export default function ImportPage() {
 
       // Step 2 — finalize
       setStage("transcribing");
-      const finalizeRes = await fetch(`http://localhost:8001/finalize/${sessionId}`, {
+      const finalizeRes = await fetch(`${BACKEND}/finalize/${sessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ meeting_title: title.trim(), niche }),
@@ -66,7 +67,7 @@ export default function ImportPage() {
 
       // Step 3 — summarize
       setStage("analyzing");
-      const summarizeRes = await fetch("http://localhost:8001/summarize", {
+      const summarizeRes = await fetch(`${BACKEND}/summarize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

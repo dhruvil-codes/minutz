@@ -9,12 +9,11 @@
         "scripting",
         "tabCapture",
         "offscreen",
-        "notifications"
+        "notifications",
+        "microphone"
     ],
     "host_permissions": [
-        "*://*.zoom.us/*",
-        "*://meet.google.com/*",
-        "*://*.teams.microsoft.com/*",
+        "<all_urls>",
         "http://localhost:3000/*",
         "http://localhost:8001/*",
         "http://localhost:3001/*"
@@ -33,11 +32,7 @@
     },
     "content_scripts": [
         {
-            "matches": [
-                "*://*.zoom.us/*",
-                "*://meet.google.com/*",
-                "*://*.teams.microsoft.com/*"
-            ],
+            "matches": ["<all_urls>"],
             "js": ["content.js"]
         },
         {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_BASE = "http://localhost:8001";
+const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
