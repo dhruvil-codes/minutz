@@ -62,7 +62,10 @@ export default function ImportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title.trim(), niche }),
       });
-      if (!finalizeRes.ok) throw new Error("Finalize failed");
+      if (!finalizeRes.ok) {
+        const finalizeError = await finalizeRes.text();
+        throw new Error(`Finalize failed (${finalizeRes.status}): ${finalizeError || "No error details returned"}`);
+      }
       const finalizeData = await finalizeRes.json();
 
       // Step 3 — summarize
@@ -76,7 +79,10 @@ export default function ImportPage() {
           niche,
         }),
       });
-      if (!summarizeRes.ok) throw new Error("Summarize failed");
+      if (!summarizeRes.ok) {
+        const summarizeError = await summarizeRes.text();
+        throw new Error(`Summarize failed (${summarizeRes.status}): ${summarizeError || "No error details returned"}`);
+      }
       const summarizeData = await summarizeRes.json();
 
       setStage("done");
